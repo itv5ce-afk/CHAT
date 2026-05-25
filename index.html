@@ -2,30 +2,36 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat Moderno</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Chat Moderno - Conexão entre Amigos</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
         body { background: #f0f2f5; height: 100vh; display: flex; flex-direction: column; }
 
         /* Header */
         header { background: #075e54; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .add-btn { cursor: pointer; font-size: 24px; font-weight: bold; }
-        .logout-btn { cursor: pointer; font-size: 14px; background: #054a3f; padding: 6px 12px; border-radius: 20px; margin-left: 10px; }
+        .add-btn { cursor: pointer; font-size: 24px; font-weight: bold; background: rgba(255,255,255,0.2); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: 0.2s; }
+        .add-btn:hover { background: rgba(255,255,255,0.3); }
+        .logout-btn { cursor: pointer; font-size: 14px; background: #054a3f; padding: 6px 12px; border-radius: 20px; margin-left: 10px; transition: 0.2s; }
+        .logout-btn:hover { background: #04382f; }
 
         /* Lista de Contatos (Modal) */
         #contact-list { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 100; padding: 20px; overflow-y: auto; }
-        .contact-item { padding: 15px; border-bottom: 1px solid #ddd; cursor: pointer; display: flex; align-items: center; }
-        .contact-item:hover { background: #f9f9f9; }
+        .contact-item { padding: 15px; border-bottom: 1px solid #ddd; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+        .contact-item:hover { background: #f0f2f5; }
+        .contact-name { font-weight: 500; }
+        .contact-status { font-size: 12px; color: #25d366; }
 
         /* Área de Chat */
         #chat-area { flex: 1; padding: 20px; overflow-y: auto; background: #e5ddd5; display: flex; flex-direction: column; gap: 10px; }
-        .message { background: #dcf8c6; padding: 10px 15px; border-radius: 8px; width: fit-content; max-width: 80%; align-self: flex-end; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        .message.received { background: white; align-self: flex-start; }
+        .message { background: #dcf8c6; padding: 10px 15px; border-radius: 18px; width: fit-content; max-width: 80%; align-self: flex-end; box-shadow: 0 1px 1px rgba(0,0,0,0.05); position: relative; word-wrap: break-word; }
+        .message.received { background: white; align-self: flex-start; border-radius: 18px; }
         .message strong { font-size: 12px; color: #075e54; display: block; margin-bottom: 4px; }
-        .input-area { padding: 15px; background: #f0f0f0; display: flex; gap: 10px; }
-        input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 20px; outline: none; }
-        button#send-btn { padding: 5px 20px; border: none; border-radius: 20px; background: #075e54; color: white; cursor: pointer; }
+        .message small { font-size: 10px; color: #999; display: block; margin-top: 4px; text-align: right; }
+        .input-area { padding: 15px; background: #f0f0f0; display: flex; gap: 10px; border-top: 1px solid #ddd; }
+        input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 25px; outline: none; font-size: 15px; }
+        button#send-btn { padding: 0 22px; border: none; border-radius: 25px; background: #075e54; color: white; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        button#send-btn:hover { background: #054a3f; }
 
         /* Tela de Login/Cadastro - responsiva e moderna */
         #auth-screen {
@@ -43,7 +49,7 @@
         }
         .auth-container {
             background: white;
-            border-radius: 20px;
+            border-radius: 28px;
             padding: 30px 25px;
             width: 90%;
             max-width: 400px;
@@ -60,7 +66,7 @@
             padding: 12px 15px;
             margin: 12px 0;
             border: 1px solid #ddd;
-            border-radius: 25px;
+            border-radius: 30px;
             font-size: 16px;
             outline: none;
             transition: 0.2s;
@@ -74,7 +80,7 @@
             padding: 12px;
             margin: 8px 0;
             border: none;
-            border-radius: 25px;
+            border-radius: 30px;
             background: #075e54;
             color: white;
             font-size: 16px;
@@ -115,12 +121,15 @@
             .auth-container { padding: 25px 20px; }
             .auth-container h2 { font-size: 24px; }
         }
+        /* Indicador de conexão */
+        .online-badge { background: #25d366; border-radius: 50%; width: 10px; height: 10px; display: inline-block; margin-left: 8px; }
+        .contact-header-info { font-size: 13px; font-weight: normal; margin-left: 8px; opacity: 0.9; }
     </style>
     <!-- Firebase SDKs -->
     <script type="module">
         // Import Firebase SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc, updateDoc, where, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
         
         // Firebase configuration
@@ -139,9 +148,29 @@
         const auth = getAuth(app);
         
         // Variáveis globais
-        let currentContact = null;
+        let currentContact = null;          // email do contato atual (ex: amigo@exemplo.com)
         let unsubscribe = null;
         let currentUserEmail = null;
+        let currentUserDisplayName = null;
+        
+        // Lista de contatos pré-definidos + dinâmicos (serão carregados os que existirem no sistema)
+        // Para garantir conectividade real, vamos permitir que o usuário adicione amigos por email (funcionalidade extra mantendo estrutura)
+        // Mas mantendo os contatos fixos "Ana Silva" e "Bruno Souza" como exemplos, agora com emails reais.
+        // Vamos criar emails simulados: ana.silva@chatdemo.com, bruno.souza@chatdemo.com.
+        // Para que dois usuários reais conversem, cada um deve se cadastrar com um email real. 
+        // Para demonstrar conectividade entre amigos: usuário logado pode adicionar amigo via email, mas os contatos fixos serão convertidos para emails.
+        
+        // Dicionário para traduzir nomes de contato para emails reais (base de dados virtual)
+        const contactEmailMap = {
+            "Ana Silva": "ana.silva@chatdemo.com",
+            "Bruno Souza": "bruno.souza@chatdemo.com"
+        };
+        
+        // Mapa reverso para exibir nome amigável
+        const friendlyNameMap = {
+            "ana.silva@chatdemo.com": "Ana Silva",
+            "bruno.souza@chatdemo.com": "Bruno Souza"
+        };
         
         // Referências DOM
         const chatArea = document.getElementById('chat-area');
@@ -150,7 +179,6 @@
         const sendBtn = document.getElementById('send-btn');
         const contactListDiv = document.getElementById('contact-list');
         const authScreen = document.getElementById('auth-screen');
-        const header = document.querySelector('header');
         
         // Elementos da autenticação
         const authEmail = document.getElementById('auth-email');
@@ -162,9 +190,9 @@
         const authToggleBtn = document.getElementById('auth-toggle-btn');
         const authTitle = document.getElementById('auth-title');
         
-        let isLoginMode = true; // true = login, false = cadastro
+        let isLoginMode = true;
         
-        // Funções de autenticação
+        // Funções de autenticação (mantidas)
         function showError(msg) {
             authError.textContent = msg;
             authError.style.display = 'block';
@@ -177,7 +205,6 @@
             setTimeout(() => { authSuccess.style.display = 'none'; }, 3000);
         }
         
-        // Alternar entre login e cadastro
         window.toggleAuthMode = function() {
             isLoginMode = !isLoginMode;
             if (isLoginMode) {
@@ -195,7 +222,6 @@
             }
         };
         
-        // Submeter formulário de auth
         window.submitAuth = async function() {
             const email = authEmail.value.trim();
             const password = authPassword.value.trim();
@@ -205,49 +231,38 @@
                 showError('Preencha e-mail e senha.');
                 return;
             }
-            
             if (!isLoginMode && password !== confirmPassword) {
                 showError('As senhas não coincidem.');
                 return;
             }
-            
             if (password.length < 6) {
                 showError('A senha deve ter no mínimo 6 caracteres.');
                 return;
             }
-            
             try {
                 if (isLoginMode) {
-                    // Login
-                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                    showSuccess('Login realizado com sucesso!');
-                    // O onAuthStateChanged cuidará de esconder a tela
+                    await signInWithEmailAndPassword(auth, email, password);
+                    showSuccess('Login realizado!');
                 } else {
-                    // Cadastro
-                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                    showSuccess('Cadastro realizado com sucesso!');
-                    // Após cadastro, já loga automaticamente
+                    await createUserWithEmailAndPassword(auth, email, password);
+                    showSuccess('Cadastro realizado! Agora você pode conversar com amigos.');
                 }
             } catch (error) {
-                console.error(error);
                 let msg = 'Erro na autenticação. ';
                 switch (error.code) {
                     case 'auth/email-already-in-use': msg = 'E-mail já cadastrado. Faça login.'; break;
                     case 'auth/invalid-email': msg = 'E-mail inválido.'; break;
                     case 'auth/user-not-found': msg = 'Usuário não encontrado.'; break;
                     case 'auth/wrong-password': msg = 'Senha incorreta.'; break;
-                    case 'auth/weak-password': msg = 'Senha muito fraca. Use pelo menos 6 caracteres.'; break;
                     default: msg = error.message;
                 }
                 showError(msg);
             }
         };
         
-        // Logout
         window.logout = async function() {
             try {
                 await signOut(auth);
-                // Resetar estado do chat
                 if (unsubscribe) {
                     unsubscribe();
                     unsubscribe = null;
@@ -256,87 +271,70 @@
                 chatTitle.innerText = 'Chat';
                 chatArea.innerHTML = '<p id="placeholder" style="text-align: center; color: #777; margin-top: 20px;">Selecione um contato para começar</p>';
                 currentUserEmail = null;
+                // Remover indicadores extras
+                const headerRight = document.querySelector('header div:first-child');
+                const statusSpan = document.getElementById('contact-status-header');
+                if(statusSpan) statusSpan.remove();
             } catch (error) {
                 console.error('Erro ao sair:', error);
             }
         };
         
-        // Funções do Chat (Mantidas e adaptadas)
-        window.toggleContacts = function() {
-            if (!currentUserEmail) return;
-            const list = document.getElementById('contact-list');
-            list.style.display = list.style.display === 'block' ? 'none' : 'block';
-        };
+        // Função para obter o ID único da conversa entre dois emails (ordem alfabética)
+        function getConversationId(user1, user2) {
+            return [user1, user2].sort().join('_');
+        }
         
-        // Função para enviar mensagem (com Firebase)
-        window.sendMessage = async function() {
-            if (!currentUserEmail) {
-                alert("Faça login primeiro!");
-                return;
-            }
-            if (!currentContact) {
-                alert("Selecione um contato primeiro!");
-                return;
-            }
-            
-            const text = messageInput.value.trim();
-            if (text === "") return;
-            
-            try {
-                const messagesRef = collection(db, "conversas", currentContact, "mensagens");
-                await addDoc(messagesRef, {
-                    texto: text,
-                    timestamp: serverTimestamp(),
-                    enviadoPor: currentUserEmail,
-                    nomeExibicao: currentUserEmail.split('@')[0]
-                });
-                messageInput.value = "";
-            } catch (error) {
-                console.error("Erro ao enviar mensagem: ", error);
-                alert("Erro ao enviar mensagem.");
-            }
-        };
-        
-        // Carregar mensagens em tempo real
-        function loadMessages(contactName) {
+        // Carregar mensagens em tempo real entre currentUserEmail e currentContact (email)
+        function loadMessages(contactEmail, contactFriendlyName) {
             if (unsubscribe) {
                 unsubscribe();
                 unsubscribe = null;
             }
+            if (!currentUserEmail || !contactEmail) return;
+            
+            const conversationId = getConversationId(currentUserEmail, contactEmail);
+            const messagesRef = collection(db, "conversas", conversationId, "mensagens");
+            const q = query(messagesRef, orderBy("timestamp", "asc"));
             
             chatArea.innerHTML = "";
             
-            const messagesRef = collection(db, "conversas", contactName, "mensagens");
-            const q = query(messagesRef, orderBy("timestamp", "asc"));
-            
             unsubscribe = onSnapshot(q, (snapshot) => {
                 chatArea.innerHTML = "";
-                
                 if (snapshot.empty) {
                     const emptyMsg = document.createElement('p');
                     emptyMsg.style.textAlign = "center";
                     emptyMsg.style.color = "#777";
                     emptyMsg.style.marginTop = "20px";
-                    emptyMsg.innerText = "Nenhuma mensagem ainda. Envie algo!";
+                    emptyMsg.innerText = "Nenhuma mensagem ainda. Envie um olá!";
                     chatArea.appendChild(emptyMsg);
                 } else {
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
+                    snapshot.forEach(docSnap => {
+                        const data = docSnap.data();
                         const messageText = data.texto;
                         const sender = data.enviadoPor;
+                        const timestamp = data.timestamp ? data.timestamp.toDate() : new Date();
+                        const timeStr = timestamp.toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' });
                         
                         const messageDiv = document.createElement('div');
                         if (sender === currentUserEmail) {
                             messageDiv.className = 'message';
                             messageDiv.innerText = messageText;
+                            const smallTime = document.createElement('small');
+                            smallTime.innerText = timeStr;
+                            messageDiv.appendChild(smallTime);
                         } else {
                             messageDiv.className = 'message received';
                             const strong = document.createElement('strong');
-                            strong.innerText = sender ? sender.split('@')[0] : contactName;
+                            const senderName = friendlyNameMap[sender] || sender.split('@')[0];
+                            strong.innerText = senderName;
                             messageDiv.appendChild(strong);
                             const textSpan = document.createElement('span');
                             textSpan.innerText = messageText;
                             messageDiv.appendChild(textSpan);
+                            const smallTime = document.createElement('small');
+                            smallTime.innerText = timeStr;
+                            messageDiv.appendChild(smallTime);
                         }
                         chatArea.appendChild(messageDiv);
                     });
@@ -348,114 +346,207 @@
             });
         }
         
-        // Iniciar conversa com contato
-        window.startChat = function(name) {
+        // Enviar mensagem para o contato atual (real)
+        window.sendMessage = async function() {
             if (!currentUserEmail) {
                 alert("Faça login primeiro!");
                 return;
             }
-            if (currentContact === name) {
-                toggleContacts();
-                return;
-            }
-            currentContact = name;
-            chatTitle.innerText = name;
-            loadMessages(name);
-            toggleContacts();
-            messageInput.focus();
-        };
-        
-        // Simular resposta automática do contato (funcionalidade bônus)
-        async function simulateAutoReply(contactName, userMessage, userEmail) {
-            if (!currentContact || currentContact !== contactName) return;
-            if (!userMessage || userMessage.trim() === "") return;
-            
-            setTimeout(async () => {
-                if (currentContact !== contactName) return;
-                
-                let replyText = "";
-                const lowerMsg = userMessage.toLowerCase();
-                if (lowerMsg.includes("olá") || lowerMsg.includes("oi")) {
-                    replyText = `Olá! Como posso ajudar? 😊`;
-                } else if (lowerMsg.includes("tudo bem")) {
-                    replyText = `Tudo ótimo, e você?`;
-                } else if (lowerMsg.includes("obrigado")) {
-                    replyText = `Por nada! 😄`;
-                } else if (lowerMsg.includes("?")) {
-                    replyText = `Ótima pergunta! Vou verificar.`;
-                } else {
-                    replyText = `Mensagem recebida: "${userMessage.substring(0, 40)}". Em breve responderei!`;
-                }
-                
-                try {
-                    const messagesRef = collection(db, "conversas", contactName, "mensagens");
-                    await addDoc(messagesRef, {
-                        texto: replyText,
-                        timestamp: serverTimestamp(),
-                        enviadoPor: `${contactName}@chat.local`,
-                        nomeExibicao: contactName
-                    });
-                } catch (err) {
-                    console.error("Erro na resposta automática:", err);
-                }
-            }, 2000);
-        }
-        
-        // Sobrescrever sendMessage para incluir resposta automática
-        const originalSend = window.sendMessage;
-        window.sendMessage = async function() {
-            if (!currentUserEmail || !currentContact) {
-                if (!currentUserEmail) alert("Faça login primeiro!");
-                else alert("Selecione um contato!");
+            if (!currentContact) {
+                alert("Selecione um contato para conversar!");
                 return;
             }
             const text = messageInput.value.trim();
             if (text === "") return;
             
+            const conversationId = getConversationId(currentUserEmail, currentContact);
+            const messagesRef = collection(db, "conversas", conversationId, "mensagens");
             try {
-                const messagesRef = collection(db, "conversas", currentContact, "mensagens");
                 await addDoc(messagesRef, {
                     texto: text,
                     timestamp: serverTimestamp(),
                     enviadoPor: currentUserEmail,
-                    nomeExibicao: currentUserEmail.split('@')[0]
+                    nomeExibicao: currentUserDisplayName || currentUserEmail.split('@')[0]
                 });
                 messageInput.value = "";
-                simulateAutoReply(currentContact, text, currentUserEmail);
             } catch (error) {
-                console.error("Erro:", error);
-                alert("Erro ao enviar.");
+                console.error("Erro ao enviar:", error);
+                alert("Erro ao enviar mensagem.");
             }
         };
         
-        // Estado de autenticação
+        // Iniciar conversa com contato usando email real
+        window.startChat = function(contactEmail, displayName) {
+            if (!currentUserEmail) {
+                alert("Faça login primeiro!");
+                return;
+            }
+            if (!contactEmail) {
+                alert("Contato inválido.");
+                return;
+            }
+            if (currentContact === contactEmail) {
+                toggleContacts();
+                return;
+            }
+            currentContact = contactEmail;
+            // Atualizar título com nome amigável
+            chatTitle.innerText = displayName;
+            // Adicionar pequeno indicador de chat real
+            loadMessages(contactEmail, displayName);
+            toggleContacts();
+            messageInput.focus();
+        };
+        
+        // Lista de contatos dinâmica: vamos buscar todos os usuários cadastrados no Firestore (coleção "usuarios")
+        // Para permitir que amigos reais se vejam, cada usuário ao fazer login registra seu email na coleção "usuarios".
+        // Também mantemos os contatos fixos como exemplo (Ana e Bruno), mas eles são emails reais.
+        async function refreshContactsList() {
+            if (!currentUserEmail) return;
+            
+            const contactListContainer = document.getElementById('contact-list');
+            // manter cabeçalho e botão, mas recriar lista de contatos
+            const existingItems = contactListContainer.querySelectorAll('.contact-item:not(.static-header)');
+            existingItems.forEach(el => el.remove());
+            
+            // Adicionar contatos fixos (que são universais)
+            const staticContacts = [
+                { email: "ana.silva@chatdemo.com", name: "Ana Silva" },
+                { email: "bruno.souza@chatdemo.com", name: "Bruno Souza" }
+            ];
+            
+            for (let contact of staticContacts) {
+                if (contact.email === currentUserEmail) continue; // não mostrar a si mesmo
+                const contactDiv = document.createElement('div');
+                contactDiv.className = 'contact-item';
+                contactDiv.innerHTML = `<div><span class="contact-name">${contact.name}</span><span class="contact-status"> (online?</span></div>`;
+                contactDiv.onclick = (function(email, name) {
+                    return function() { window.startChat(email, name); };
+                })(contact.email, contact.name);
+                contactListContainer.appendChild(contactDiv);
+            }
+            
+            // Buscar outros usuários reais no Firestore (exceto o atual)
+            try {
+                const usuariosRef = collection(db, "usuarios");
+                const q = query(usuariosRef, where("email", "!=", currentUserEmail));
+                const snapshot = await getDocs(q);
+                snapshot.forEach(docSnap => {
+                    const userData = docSnap.data();
+                    const userEmail = userData.email;
+                    if (userEmail === currentUserEmail) return;
+                    if (staticContacts.some(c => c.email === userEmail)) return; // já adicionado
+                    const nomeExib = userData.displayName || userEmail.split('@')[0];
+                    const contactDiv = document.createElement('div');
+                    contactDiv.className = 'contact-item';
+                    contactDiv.innerHTML = `<div><span class="contact-name">${nomeExib}</span><span class="contact-status"> (ativo)</span></div>`;
+                    contactDiv.onclick = (function(email, name) {
+                        return function() { window.startChat(email, name); };
+                    })(userEmail, nomeExib);
+                    contactListContainer.appendChild(contactDiv);
+                });
+            } catch (err) {
+                console.warn("Erro ao carregar contatos dinâmicos:", err);
+            }
+            
+            // Adicionar botão "Adicionar amigo por email" (funcionalidade extra mantendo estrutura)
+            const addFriendBtn = document.createElement('div');
+            addFriendBtn.className = 'contact-item';
+            addFriendBtn.style.backgroundColor = "#e9f5f2";
+            addFriendBtn.style.marginTop = "10px";
+            addFriendBtn.innerHTML = `<div><span class="contact-name">➕ Adicionar amigo por e-mail</span></div>`;
+            addFriendBtn.onclick = () => {
+                const friendEmail = prompt("Digite o e-mail do seu amigo (ex: amigo@exemplo.com):");
+                if (friendEmail && friendEmail.trim() !== "") {
+                    // Verificar se já existe na lista ou é o próprio usuário
+                    if (friendEmail === currentUserEmail) {
+                        alert("Você não pode adicionar a si mesmo.");
+                        return;
+                    }
+                    // Criar entrada no Firestore para esse contato (opcional mas permite reconhecimento)
+                    // Guardar como "contato_sugerido"
+                    addDoc(collection(db, "usuarios_sugeridos"), {
+                        email: friendEmail,
+                        addedBy: currentUserEmail,
+                        timestamp: serverTimestamp()
+                    }).then(() => {
+                        alert(`Solicitação enviada! Quando ${friendEmail} fizer login, poderá conversar.`);
+                        refreshContactsList();
+                    }).catch(e => {
+                        alert("Erro ao adicionar. Mas você pode começar a conversar se ele já existir.");
+                        // Ainda assim tentar iniciar conversa? Vamos apenas recarregar lista.
+                        refreshContactsList();
+                    });
+                }
+            };
+            contactListContainer.appendChild(addFriendBtn);
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.innerText = "Fechar";
+            closeBtn.style.marginTop = "20px";
+            closeBtn.style.padding = "10px";
+            closeBtn.style.width = "100%";
+            closeBtn.style.border = "none";
+            closeBtn.style.borderRadius = "30px";
+            closeBtn.style.background = "#075e54";
+            closeBtn.style.color = "white";
+            closeBtn.onclick = () => toggleContacts();
+            contactListContainer.appendChild(closeBtn);
+        }
+        
+        // Registrar usuário logado na coleção "usuarios" para aparecer na lista de contatos dos amigos
+        async function registerUserInDirectory(userEmail) {
+            if (!userEmail) return;
+            const userDocRef = doc(db, "usuarios", userEmail.replace(/\./g, '_'));
+            const docSnap = await getDoc(userDocRef);
+            if (!docSnap.exists()) {
+                await setDoc(userDocRef, {
+                    email: userEmail,
+                    displayName: userEmail.split('@')[0],
+                    createdAt: serverTimestamp(),
+                    lastSeen: serverTimestamp()
+                });
+            } else {
+                await updateDoc(userDocRef, { lastSeen: serverTimestamp() });
+            }
+        }
+        
+        // Alternar modal contatos
+        window.toggleContacts = function() {
+            if (!currentUserEmail) return;
+            const list = document.getElementById('contact-list');
+            if (list.style.display === 'block') {
+                list.style.display = 'none';
+            } else {
+                refreshContactsList(); // sempre atualiza ao abrir
+                list.style.display = 'block';
+            }
+        };
+        
+        // Estado de autenticação principal
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // Usuário logado
                 currentUserEmail = user.email;
+                currentUserDisplayName = user.email.split('@')[0];
+                await registerUserInDirectory(currentUserEmail);
                 authScreen.style.display = 'none';
-                // Mostra o header e o chat completamente
                 document.body.style.overflow = 'auto';
-                // Limpar campos de autenticação
                 authEmail.value = '';
                 authPassword.value = '';
                 authConfirmPassword.value = '';
                 
-                // Atualizar header com email e botão sair
-                const headerRight = document.querySelector('header div:first-child') ? 
-                    document.querySelector('header div') : document.createElement('div');
-                let logoutBtnExists = document.getElementById('logout-btn-header');
-                if (!logoutBtnExists) {
+                // Atualizar header: mostrar email e botão sair
+                let logoutBtn = document.getElementById('logout-btn-header');
+                if (!logoutBtn) {
+                    const addBtn = document.querySelector('.add-btn');
                     const logoutSpan = document.createElement('span');
                     logoutSpan.id = 'logout-btn-header';
                     logoutSpan.className = 'logout-btn';
                     logoutSpan.innerText = 'Sair';
                     logoutSpan.onclick = () => logout();
-                    const addBtn = document.querySelector('.add-btn');
                     addBtn.parentNode.insertBefore(logoutSpan, addBtn.nextSibling);
                 }
-                // Mostrar email reduzido no título
-                const userSpan = document.getElementById('user-email-display');
+                let userSpan = document.getElementById('user-email-display');
                 if (!userSpan) {
                     const titleSpan = document.getElementById('chat-title');
                     const smallEmail = document.createElement('small');
@@ -469,14 +560,13 @@
                     userSpan.innerText = user.email.split('@')[0];
                 }
                 
-                // Resetar conversa atual
+                // Se já havia conversa selecionada, recarregar
                 if (currentContact) {
-                    loadMessages(currentContact);
+                    loadMessages(currentContact, friendlyNameMap[currentContact] || currentContact.split('@')[0]);
                 } else {
                     chatArea.innerHTML = '<p id="placeholder" style="text-align: center; color: #777; margin-top: 20px;">Selecione um contato para começar</p>';
                 }
             } else {
-                // Usuário deslogado
                 currentUserEmail = null;
                 currentContact = null;
                 if (unsubscribe) {
@@ -485,43 +575,47 @@
                 }
                 authScreen.style.display = 'flex';
                 chatTitle.innerText = 'Chat';
-                chatArea.innerHTML = '<p id="placeholder" style="text-align: center; color: #777; margin-top: 20px;">Faça login para usar o chat</p>';
-                // Remover botão sair se existir
+                chatArea.innerHTML = '<p id="placeholder" style="text-align: center; color: #777; margin-top: 20px;">Faça login para conversar com seus amigos</p>';
                 const logoutBtn = document.getElementById('logout-btn-header');
                 if (logoutBtn) logoutBtn.remove();
                 const userSpanElem = document.getElementById('user-email-display');
                 if (userSpanElem) userSpanElem.remove();
-                // Resetar modo para login
                 if (!isLoginMode) window.toggleAuthMode();
+                // Limpar lista de contatos modal
+                const contactListDivInner = document.getElementById('contact-list');
+                if (contactListDivInner) {
+                    const children = contactListDivInner.querySelectorAll('.contact-item, button');
+                    children.forEach(el => el.remove());
+                    const headerTitle = document.createElement('h3');
+                    headerTitle.innerText = "Selecione um contato";
+                    contactListDivInner.appendChild(headerTitle);
+                }
             }
         });
         
-        // Evento Enter no input de mensagem
+        // Evento Enter
         document.getElementById('message-input').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') window.sendMessage();
         });
         
-        // Eventos dos botões de autenticação
+        // Configuração inicial de UI e listeners
         document.getElementById('auth-submit-btn').onclick = () => window.submitAuth();
         document.getElementById('auth-toggle-btn').onclick = () => window.toggleAuthMode();
-        
-        // Inicializar tela de auth (já visível)
+        window.toggleAuthMode(); // esconder confirm inicialmente
         authScreen.style.display = 'flex';
-        // Configurar modo login inicial
-        window.toggleAuthMode(); // Garante que confirmPassword fique escondido no início
         
-        // Adicionar listener para fechar contatos ao clicar fora (melhoria)
+        // Fechar modal ao clicar fora
         document.addEventListener('click', function(e) {
             const contactList = document.getElementById('contact-list');
             const addBtn = document.querySelector('.add-btn');
-            if (contactList.style.display === 'block' && !contactList.contains(e.target) && e.target !== addBtn && !addBtn.contains(e.target)) {
+            if (contactList && contactList.style.display === 'block' && !contactList.contains(e.target) && e.target !== addBtn && !addBtn.contains(e.target)) {
                 if (!e.target.closest('.contact-item')) {
                     contactList.style.display = 'none';
                 }
             }
         });
         
-        console.log("Firebase Auth + Chat pronto!");
+        console.log("Firebase com conectividade real entre usuários ativo!");
     </script>
 </head>
 <body>
@@ -535,9 +629,7 @@
 
 <div id="contact-list">
     <h3>Selecione um contato</h3>
-    <div class="contact-item" onclick="startChat('Ana Silva')">Ana Silva</div>
-    <div class="contact-item" onclick="startChat('Bruno Souza')">Bruno Souza</div>
-    <button onclick="toggleContacts()" style="margin-top: 20px; padding: 10px;">Fechar</button>
+    <!-- Os contatos serão preenchidos dinamicamente via JavaScript -->
 </div>
 
 <div id="chat-area">
@@ -560,7 +652,7 @@
         <div id="auth-success" class="success-msg"></div>
         <button id="auth-submit-btn">Entrar</button>
         <button id="auth-toggle-btn" class="toggle-btn">Criar nova conta</button>
-        <p>🔒 Chat seguro com Firebase</p>
+        <p>🔒 Chat seguro com Firebase - Converse com seus amigos em tempo real!</p>
     </div>
 </div>
 
