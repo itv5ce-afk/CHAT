@@ -216,13 +216,26 @@
         .hidden {
             display: none;
         }
+        
+        /* Animação de piscar */
+        @keyframes blink {
+            0% { background-color: transparent; }
+            50% { background-color: #ffeb3b; }
+            100% { background-color: transparent; }
+        }
+        .blinking {
+            animation: blink 1s infinite;
+            border-radius: 12px;
+            padding: 10px;
+            margin: -10px;
+        }
     </style>
     <!-- Firebase SDKs -->
     <script type="module">
         // Import Firebase SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc, updateDoc, where, getDocs, deleteDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, deleteUser } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc, updateDoc, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
         
         // Firebase configuration
         const firebaseConfig = {
@@ -245,11 +258,12 @@
         let currentUserEmail = null;
         let currentUserDisplayName = null;
         
-        // Lista de contatos pré-definidos - REMOVIDOS Ana Silva e Bruno Souza
-        const contactEmailMap = {}; // Vazio agora
+        // Armazenar os listeners de mensagens não lidas por contato
+        let unreadListeners = new Map(); // key: email do contato, value: unsubscribe function
+        let blinkingContacts = new Set(); // Armazena emails que estão piscando
         
-        // Mapa reverso para exibir nome amigável - VAZIO
-        const friendlyNameMap = {}; // Sem contatos fixos
+        // Mapa reverso para exibir nome amigável
+        const friendlyNameMap = {};
         
         // Referências DOM
         const chatArea = document.getElementById('chat-area');
@@ -273,6 +287,108 @@
         
         let isLoginMode = true;
         
+        // Função para verificar e parar de piscar um contato específico
+        function stopBlinking(contactEmail) {
+            if (blinkingContacts.has(contactEmail)) {
+                blinkingContacts.delete(contactEmail);
+                // Remover classe blinking do elemento na tela principal
+                const contactElement = document.querySelector(`.contact-item-main[data-email="${contactEmail}"]`);
+                if (contactElement) {
+                    contactElement.classList.remove('blinking');
+                }
+                // Também remover do modal de contatos
+                const modalContactElement = document.querySelector(`.contact-item[data-email="${contactEmail}"]`);
+                if (modalContactElement) {
+                    modalContactElement.classList.remove('blinking');
+                }
+            }
+        }
+        
+        // Função para iniciar listener de mensagens não lidas para um contato
+        function startUnreadListener(contactEmail, contactName) {
+            if (!currentUserEmail) return;
+            
+            // Se já existe listener para este contato, remove primeiro
+            if (unreadListeners.has(contactEmail)) {
+                unreadListeners.get(contactEmail)();
+                unreadListeners.delete(contactEmail);
+            }
+            
+            const conversationId = getConversationId(currentUserEmail, contactEmail);
+            const messagesRef = collection(db, "conversas", conversationId, "mensagens");
+            const q = query(messagesRef, orderBy("timestamp", "desc"));
+            
+            // Última mensagem lida (vamos armazenar no Firestore)
+            const lastReadRef = doc(db, "leituras", `${currentUserEmail}_${contactEmail}`);
+            
+            // Função para verificar novas mensagens
+            const unsubscribeListener = onSnapshot(q, async (snapshot) => {
+                if (snapshot.empty) return;
+                
+                // Verificar se a conversa atual está aberta
+                const isCurrentConversation = (currentContact === contactEmail);
+                
+                // Buscar a última mensagem
+                const lastMessage = snapshot.docs[0];
+                const lastMessageData = lastMessage.data();
+                const lastMessageTimestamp = lastMessageData.timestamp;
+                const lastMessageSender = lastMessageData.enviadoPor;
+                
+                // Se quem enviou foi o próprio usuário, não precisa piscar
+                if (lastMessageSender === currentUserEmail) {
+                    stopBlinking(contactEmail);
+                    return;
+                }
+                
+                // Buscar última leitura registrada
+                const lastReadDoc = await getDoc(lastReadRef);
+                let lastReadTimestamp = null;
+                
+                if (lastReadDoc.exists()) {
+                    lastReadTimestamp = lastReadDoc.data().lastRead;
+                }
+                
+                // Se não tem registro de leitura ou a última mensagem é mais recente que a leitura
+                const needBlink = (!lastReadTimestamp || 
+                    (lastMessageTimestamp && lastMessageTimestamp.toDate() > lastReadTimestamp.toDate()));
+                
+                if (needBlink && !isCurrentConversation) {
+                    // Adicionar efeito de piscar
+                    if (!blinkingContacts.has(contactEmail)) {
+                        blinkingContacts.add(contactEmail);
+                        
+                        // Aplicar classe blinking nos elementos visuais
+                        const contactElement = document.querySelector(`.contact-item-main[data-email="${contactEmail}"]`);
+                        if (contactElement) {
+                            contactElement.classList.add('blinking');
+                        }
+                        const modalContactElement = document.querySelector(`.contact-item[data-email="${contactEmail}"]`);
+                        if (modalContactElement) {
+                            modalContactElement.classList.add('blinking');
+                        }
+                    }
+                } else {
+                    stopBlinking(contactEmail);
+                }
+            });
+            
+            unreadListeners.set(contactEmail, unsubscribeListener);
+        }
+        
+        // Função para registrar leitura da conversa atual
+        async function markAsRead(contactEmail) {
+            if (!currentUserEmail || !contactEmail) return;
+            
+            const lastReadRef = doc(db, "leituras", `${currentUserEmail}_${contactEmail}`);
+            await setDoc(lastReadRef, {
+                lastRead: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+            
+            // Parar de piscar este contato
+            stopBlinking(contactEmail);
+        }
+        
         // Função para voltar para tela principal
         window.goToMainScreen = function() {
             if (!currentUserEmail) {
@@ -283,6 +399,12 @@
                 unsubscribe();
                 unsubscribe = null;
             }
+            
+            // Marcar mensagens como lidas da conversa atual antes de sair
+            if (currentContact) {
+                markAsRead(currentContact);
+            }
+            
             currentContact = null;
             chatTitle.innerText = "Chat";
             chatContainer.classList.add('hidden');
@@ -317,8 +439,11 @@
                         const nomeExib = userData.displayName || userEmail.split('@')[0];
                         const initial = nomeExib.charAt(0).toUpperCase();
                         
+                        friendlyNameMap[userEmail] = nomeExib;
+                        
                         const contactDiv = document.createElement('div');
                         contactDiv.className = 'contact-item-main';
+                        contactDiv.setAttribute('data-email', userEmail);
                         contactDiv.innerHTML = `
                             <div class="contact-avatar">${initial}</div>
                             <div class="contact-info">
@@ -327,9 +452,16 @@
                             </div>
                         `;
                         contactDiv.onclick = (function(email, name) {
-                            return function() { startChatFromMain(email, name); };
+                            return function() { 
+                                // Marcar como lido ao abrir a conversa
+                                markAsRead(email);
+                                startChatFromMain(email, name);
+                            };
                         })(userEmail, nomeExib);
                         contactListMain.appendChild(contactDiv);
+                        
+                        // Iniciar listener de mensagens não lidas para este contato
+                        startUnreadListener(userEmail, nomeExib);
                     });
                 }
             } catch (err) {
@@ -348,6 +480,10 @@
                 alert("Contato inválido.");
                 return;
             }
+            
+            // Marcar como lido ao entrar na conversa
+            markAsRead(contactEmail);
+            
             currentContact = contactEmail;
             chatTitle.innerText = displayName;
             mainScreen.classList.add('hidden');
@@ -427,6 +563,13 @@
         // Função de logout (mantida para o botão Sair)
         window.logout = async function() {
             try {
+                // Limpar todos os listeners de mensagens não lidas
+                for (const [email, unsubscribeFn] of unreadListeners) {
+                    unsubscribeFn();
+                }
+                unreadListeners.clear();
+                blinkingContacts.clear();
+                
                 await signOut(auth);
                 if (unsubscribe) {
                     unsubscribe();
@@ -442,6 +585,8 @@
                 document.getElementById('settings-menu').classList.remove('show');
                 chatContainer.classList.add('hidden');
                 mainScreen.classList.add('hidden');
+                // Garantir que a tela de autenticação seja mostrada novamente
+                authScreen.style.display = 'flex';
             } catch (error) {
                 console.error('Erro ao sair:', error);
             }
@@ -452,7 +597,7 @@
             return [user1, user2].sort().join('_');
         }
         
-        // NOVA FUNÇÃO: Limpar Mensagens (apagar todas as mensagens da conversa atual)
+        // Função para Limpar Mensagens
         window.clearMessages = async function() {
             if (!currentUserEmail || !currentContact) {
                 alert("Nenhuma conversa selecionada.");
@@ -475,7 +620,6 @@
                         unsubscribe = null;
                     }
                     chatArea.innerHTML = '<p style="text-align: center; color: #777; margin-top: 20px;">Conversa limpa. Envie uma nova mensagem!</p>';
-                    // Recarregar listener para novas mensagens
                     loadMessages(currentContact, friendlyNameMap[currentContact] || currentContact.split('@')[0]);
                 } catch (error) {
                     console.error("Erro ao limpar mensagens:", error);
@@ -485,7 +629,7 @@
             document.getElementById('settings-menu').classList.remove('show');
         };
         
-        // NOVA FUNÇÃO: Excluir Conversa (deletar toda a conversa do Firestore)
+        // Função para Excluir Conversa
         window.deleteConversation = async function() {
             if (!currentUserEmail || !currentContact) {
                 alert("Nenhuma conversa selecionada.");
@@ -495,7 +639,6 @@
                 const conversationId = getConversationId(currentUserEmail, currentContact);
                 const conversationRef = doc(db, "conversas", conversationId);
                 try {
-                    // Primeiro, deletar todas as subcoleções de mensagens
                     const messagesRef = collection(db, "conversas", conversationId, "mensagens");
                     const q = query(messagesRef);
                     const snapshot = await getDocs(q);
@@ -504,7 +647,6 @@
                         deletePromises.push(deleteDoc(docSnap.ref));
                     });
                     await Promise.all(deletePromises);
-                    // Depois deletar o documento da conversa
                     await deleteDoc(conversationRef);
                     alert("Conversa excluída com sucesso!");
                     if (unsubscribe) {
@@ -523,7 +665,7 @@
             document.getElementById('settings-menu').classList.remove('show');
         };
         
-        // NOVA FUNÇÃO: Deletar Usuário (remover contato da agenda)
+        // Função para Deletar Usuário
         window.deleteContact = async function() {
             if (!currentUserEmail || !currentContact) {
                 alert("Nenhum contato selecionado.");
@@ -532,7 +674,6 @@
             const contactName = friendlyNameMap[currentContact] || currentContact.split('@')[0];
             if (confirm(`Tem certeza que deseja remover "${contactName}" da sua lista de contatos? Essa ação não apaga as mensagens, apenas remove o contato da sua agenda.`)) {
                 try {
-                    // Remover da coleção de contatos do usuário (se existir)
                     const userContactsRef = doc(db, "usuarios_contatos", currentUserEmail.replace(/\./g, '_'));
                     const userContactsSnap = await getDoc(userContactsRef);
                     if (userContactsSnap.exists()) {
@@ -541,7 +682,14 @@
                         await updateDoc(userContactsRef, { contacts: updatedContacts });
                     }
                     alert(`Contato ${contactName} removido da sua agenda!`);
-                    // Limpar conversa atual se desejar
+                    
+                    // Parar listener deste contato
+                    if (unreadListeners.has(currentContact)) {
+                        unreadListeners.get(currentContact)();
+                        unreadListeners.delete(currentContact);
+                    }
+                    stopBlinking(currentContact);
+                    
                     currentContact = null;
                     chatTitle.innerText = "Chat";
                     chatArea.innerHTML = '<p id="placeholder" style="text-align: center; color: #777; margin-top: 20px;">Contato removido. Selecione outro contato.</p>';
@@ -662,6 +810,10 @@
                 toggleContacts();
                 return;
             }
+            
+            // Marcar como lido ao abrir a conversa
+            markAsRead(contactEmail);
+            
             currentContact = contactEmail;
             chatTitle.innerText = displayName;
             loadMessages(contactEmail, displayName);
@@ -669,16 +821,13 @@
             messageInput.focus();
         };
         
-        // Lista de contatos dinâmica - SEM contatos fixos
+        // Lista de contatos dinâmica
         async function refreshContactsList() {
             if (!currentUserEmail) return;
             
             const contactListContainer = document.getElementById('contact-list');
-            // Limpar contatos existentes exceto o cabeçalho
             const existingItems = contactListContainer.querySelectorAll('.contact-item:not(.static-header)');
             existingItems.forEach(el => el.remove());
-            
-            // REMOVIDOS: contatos fixos Ana Silva e Bruno Souza
             
             try {
                 const usuariosRef = collection(db, "usuarios");
@@ -689,13 +838,24 @@
                     const userEmail = userData.email;
                     if (userEmail === currentUserEmail) return;
                     const nomeExib = userData.displayName || userEmail.split('@')[0];
+                    friendlyNameMap[userEmail] = nomeExib;
+                    
                     const contactDiv = document.createElement('div');
                     contactDiv.className = 'contact-item';
+                    contactDiv.setAttribute('data-email', userEmail);
                     contactDiv.innerHTML = `<div><span class="contact-name">${nomeExib}</span><span class="contact-status"> (ativo)</span></div>`;
                     contactDiv.onclick = (function(email, name) {
-                        return function() { window.startChat(email, name); };
+                        return function() { 
+                            markAsRead(email);
+                            window.startChat(email, name); 
+                        };
                     })(userEmail, nomeExib);
                     contactListContainer.appendChild(contactDiv);
+                    
+                    // Adicionar classe blinking se necessário
+                    if (blinkingContacts.has(userEmail)) {
+                        contactDiv.classList.add('blinking');
+                    }
                 });
             } catch (err) {
                 console.warn("Erro ao carregar contatos dinâmicos:", err);
@@ -842,17 +1002,25 @@
                     userSpan.innerText = user.email.split('@')[0];
                 }
                 
-                // Mostrar tela principal ao invés do chat
+                // Mostrar tela principal
                 mainScreen.classList.remove('hidden');
                 chatContainer.classList.add('hidden');
                 loadContactsOnMainScreen();
             } else {
+                // Limpar todos os listeners antes de sair
+                for (const [email, unsubscribeFn] of unreadListeners) {
+                    unsubscribeFn();
+                }
+                unreadListeners.clear();
+                blinkingContacts.clear();
+                
                 currentUserEmail = null;
                 currentContact = null;
                 if (unsubscribe) {
                     unsubscribe();
                     unsubscribe = null;
                 }
+                // Garantir que a tela de autenticação apareça
                 authScreen.style.display = 'flex';
                 chatTitle.innerText = 'Chat';
                 chatArea.innerHTML = '<p id="placeholder" style="text-align: center; color: #777; margin-top: 20px;">Faça login para conversar com seus amigos</p>';
