@@ -26,10 +26,27 @@
         .settings-menu-item:hover { background: #f0f2f5; }
         .settings-menu-item.danger { color: #d32f2f; }
         .settings-menu-item.danger:hover { background: #ffebee; }
-        /* Estilo para o item de usuário logado (não clicável/informativo) */
-        .settings-menu-item.logged-user { color: #075e54; font-weight: 500; background: #e8f5e9; cursor: default; }
-        .settings-menu-item.logged-user:hover { background: #e8f5e9; }
-        .logged-email { font-size: 12px; color: #555; font-weight: normal; margin-left: 5px; word-break: break-all; }
+
+        /* Botão de notificação de solicitações */
+        .notification-container { position: relative; display: inline-block; margin-right: 10px; }
+        .notification-btn { cursor: pointer; font-size: 20px; background: rgba(255,255,255,0.2); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: 0.2s; position: relative; }
+        .notification-btn:hover { background: rgba(255,255,255,0.3); }
+        .notification-badge { position: absolute; top: -5px; right: -5px; background: #f44336; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .notification-panel { display: none; position: absolute; right: 0; top: 45px; background: white; min-width: 280px; max-width: 320px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 150; overflow: hidden; }
+        .notification-panel.show { display: block; }
+        .notification-header { padding: 12px 16px; background: #075e54; color: white; font-weight: bold; }
+        .notification-list { max-height: 300px; overflow-y: auto; }
+        .request-item { padding: 12px 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .request-info { flex: 1; }
+        .request-email { font-size: 13px; color: #666; }
+        .request-name { font-weight: 500; color: #333; }
+        .request-actions { display: flex; gap: 8px; }
+        .accept-btn, .reject-btn { padding: 4px 12px; border: none; border-radius: 20px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .accept-btn { background: #25d366; color: white; }
+        .accept-btn:hover { background: #20b858; }
+        .reject-btn { background: #f44336; color: white; }
+        .reject-btn:hover { background: #d32f2f; }
+        .no-requests { padding: 20px; text-align: center; color: #999; font-size: 13px; }
 
         /* Lista de Contatos (Modal) */
         #contact-list { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 100; padding: 20px; overflow-y: auto; }
@@ -295,8 +312,8 @@
     <script type="module">
         // Import Firebase SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc, updateDoc, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc, updateDoc, where, getDocs, deleteDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
         
         // Firebase configuration
         const firebaseConfig = {
@@ -313,22 +330,17 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
         
-        // Configurar persistência LOCAL (manter logado mesmo fechando o navegador)
-        setPersistence(auth, browserLocalPersistence).catch((error) => {
-            console.error("Erro ao configurar persistência:", error);
-        });
-        
         // Variáveis globais
-        let currentContact = null;          // email do contato atual (ex: amigo@exemplo.com)
+        let currentContact = null;
         let unsubscribe = null;
         let currentUserEmail = null;
         let currentUserDisplayName = null;
+        let unreadListeners = new Map();
+        let blinkingContacts = new Set();
+        let friendsList = []; // Lista de amigos (emails)
+        let pendingRequestsListener = null; // Listener para solicitações pendentes
+        let friendsListener = null; // Listener para amigos aceitos
         
-        // Armazenar os listeners de mensagens não lidas por contato
-        let unreadListeners = new Map(); // key: email do contato, value: unsubscribe function
-        let blinkingContacts = new Set(); // Armazena emails que estão piscando
-        
-        // Mapa reverso para exibir nome amigável
         const friendlyNameMap = {};
         
         // Referências DOM
@@ -340,6 +352,10 @@
         const authScreen = document.getElementById('auth-screen');
         const mainScreen = document.getElementById('main-screen');
         const chatContainer = document.getElementById('chat-container');
+        const notificationBtn = document.getElementById('notification-btn');
+        const notificationBadge = document.getElementById('notification-badge');
+        const notificationPanel = document.getElementById('notification-panel');
+        const notificationList = document.getElementById('notification-list');
         
         // Elementos da autenticação
         const authEmail = document.getElementById('auth-email');
@@ -353,171 +369,241 @@
         
         let isLoginMode = true;
         
-        // Função para atualizar o menu de configurações com o e-mail logado
-        function updateSettingsMenuWithUser() {
-            const settingsMenu = document.getElementById('settings-menu');
-            // Remove o item de usuário logado se existir para evitar duplicatas
-            const existingUserItem = document.getElementById('logged-user-menu-item');
-            if (existingUserItem) existingUserItem.remove();
-            
-            if (currentUserEmail) {
-                const userItem = document.createElement('div');
-                userItem.id = 'logged-user-menu-item';
-                userItem.className = 'settings-menu-item logged-user';
-                // Mostrar e-mail de forma amigável (primeira parte antes do @)
-                const displayEmail = currentUserEmail.split('@')[0];
-                userItem.innerHTML = `
-                    👤 <span>Logado como: <strong>${displayEmail}</strong></span>
-                    <span class="logged-email">(${currentUserEmail})</span>
-                `;
-                // Inserir como primeiro item do menu
-                const firstItem = settingsMenu.firstChild;
-                settingsMenu.insertBefore(userItem, firstItem);
-            }
+        // ========== FUNÇÕES DE AMIZADE E SOLICITAÇÕES ==========
+        
+        // Verificar se um usuário existe pelo email
+        async function userExists(email) {
+            const usersRef = collection(db, "usuarios");
+            const q = query(usersRef, where("email", "==", email));
+            const snapshot = await getDocs(q);
+            return !snapshot.empty;
         }
         
-        // Função para verificar e parar de piscar um contato específico
-        function stopBlinking(contactEmail) {
-            if (blinkingContacts.has(contactEmail)) {
-                blinkingContacts.delete(contactEmail);
-                // Remover classe blinking do elemento na tela principal
-                const contactElement = document.querySelector(`.contact-item-main[data-email="${contactEmail}"]`);
-                if (contactElement) {
-                    contactElement.classList.remove('blinking');
-                }
-                // Também remover do modal de contatos
-                const modalContactElement = document.querySelector(`.contact-item[data-email="${contactEmail}"]`);
-                if (modalContactElement) {
-                    modalContactElement.classList.remove('blinking');
-                }
-            }
-        }
-        
-        // Função para iniciar listener de mensagens não lidas para um contato
-        function startUnreadListener(contactEmail, contactName) {
-            if (!currentUserEmail) return;
-            
-            // Se já existe listener para este contato, remove primeiro
-            if (unreadListeners.has(contactEmail)) {
-                unreadListeners.get(contactEmail)();
-                unreadListeners.delete(contactEmail);
-            }
-            
-            const conversationId = getConversationId(currentUserEmail, contactEmail);
-            const messagesRef = collection(db, "conversas", conversationId, "mensagens");
-            const q = query(messagesRef, orderBy("timestamp", "desc"));
-            
-            // Última mensagem lida (vamos armazenar no Firestore)
-            const lastReadRef = doc(db, "leituras", `${currentUserEmail}_${contactEmail}`);
-            
-            // Função para verificar novas mensagens
-            const unsubscribeListener = onSnapshot(q, async (snapshot) => {
-                if (snapshot.empty) return;
-                
-                // Verificar se a conversa atual está aberta
-                const isCurrentConversation = (currentContact === contactEmail);
-                
-                // Buscar a última mensagem
-                const lastMessage = snapshot.docs[0];
-                const lastMessageData = lastMessage.data();
-                const lastMessageTimestamp = lastMessageData.timestamp;
-                const lastMessageSender = lastMessageData.enviadoPor;
-                
-                // Se quem enviou foi o próprio usuário, não precisa piscar
-                if (lastMessageSender === currentUserEmail) {
-                    stopBlinking(contactEmail);
-                    return;
-                }
-                
-                // Buscar última leitura registrada
-                const lastReadDoc = await getDoc(lastReadRef);
-                let lastReadTimestamp = null;
-                
-                if (lastReadDoc.exists()) {
-                    lastReadTimestamp = lastReadDoc.data().lastRead;
-                }
-                
-                // Se não tem registro de leitura ou a última mensagem é mais recente que a leitura
-                const needBlink = (!lastReadTimestamp || 
-                    (lastMessageTimestamp && lastMessageTimestamp.toDate() > lastReadTimestamp.toDate()));
-                
-                if (needBlink && !isCurrentConversation) {
-                    // Adicionar efeito de piscar
-                    if (!blinkingContacts.has(contactEmail)) {
-                        blinkingContacts.add(contactEmail);
-                        
-                        // Aplicar classe blinking nos elementos visuais
-                        const contactElement = document.querySelector(`.contact-item-main[data-email="${contactEmail}"]`);
-                        if (contactElement) {
-                            contactElement.classList.add('blinking');
-                        }
-                        const modalContactElement = document.querySelector(`.contact-item[data-email="${contactEmail}"]`);
-                        if (modalContactElement) {
-                            modalContactElement.classList.add('blinking');
-                        }
-                    }
-                } else {
-                    stopBlinking(contactEmail);
-                }
-            });
-            
-            unreadListeners.set(contactEmail, unsubscribeListener);
-        }
-        
-        // Função para registrar leitura da conversa atual
-        async function markAsRead(contactEmail) {
-            if (!currentUserEmail || !contactEmail) return;
-            
-            const lastReadRef = doc(db, "leituras", `${currentUserEmail}_${contactEmail}`);
-            await setDoc(lastReadRef, {
-                lastRead: serverTimestamp(),
-                updatedAt: serverTimestamp()
-            });
-            
-            // Parar de piscar este contato
-            stopBlinking(contactEmail);
-        }
-        
-        // Função para voltar para tela principal
-        window.goToMainScreen = function() {
+        // Enviar solicitação de amizade
+        window.sendFriendRequest = async function() {
             if (!currentUserEmail) {
                 alert("Faça login primeiro!");
                 return;
             }
-            if (unsubscribe) {
-                unsubscribe();
-                unsubscribe = null;
-            }
+            const friendEmail = prompt("Digite o e-mail do seu amigo para enviar solicitação:");
+            if (!friendEmail || friendEmail.trim() === "") return;
+            const emailTrimmed = friendEmail.trim();
             
-            // Marcar mensagens como lidas da conversa atual antes de sair
-            if (currentContact) {
-                markAsRead(currentContact);
-            }
-            
-            currentContact = null;
-            chatTitle.innerText = "Chat";
-            chatContainer.classList.add('hidden');
-            mainScreen.classList.remove('hidden');
-            loadContactsOnMainScreen();
-        };
-        
-        // Função de busca de contatos
-        let allContacts = []; // Armazena todos os contatos para busca
-        
-        function filterContacts(searchTerm) {
-            const contactListMain = document.getElementById('contact-list-main');
-            if (!searchTerm.trim()) {
-                // Se busca estiver vazia, mostrar todos os contatos
-                renderContactsList(allContacts);
+            if (emailTrimmed === currentUserEmail) {
+                alert("Você não pode enviar solicitação para si mesmo.");
                 return;
             }
             
-            const term = searchTerm.toLowerCase().trim();
-            const filtered = allContacts.filter(contact => 
-                contact.name.toLowerCase().includes(term) || 
-                contact.email.toLowerCase().includes(term)
+            // Verificar se já são amigos
+            const alreadyFriend = friendsList.includes(emailTrimmed);
+            if (alreadyFriend) {
+                alert("Você já é amigo(a) desta pessoa!");
+                return;
+            }
+            
+            // Verificar se já existe solicitação pendente
+            const requestsRef = collection(db, "solicitacoes");
+            const existingQuery = query(requestsRef, 
+                where("remetente", "==", currentUserEmail),
+                where("destinatario", "==", emailTrimmed),
+                where("status", "==", "pendente")
             );
-            renderContactsList(filtered);
+            const existingSnap = await getDocs(existingQuery);
+            if (!existingSnap.empty) {
+                alert("Você já enviou uma solicitação para este e-mail aguardando resposta.");
+                return;
+            }
+            
+            // Verificar se existe solicitação reversa pendente
+            const reverseQuery = query(requestsRef,
+                where("remetente", "==", emailTrimmed),
+                where("destinatario", "==", currentUserEmail),
+                where("status", "==", "pendente")
+            );
+            const reverseSnap = await getDocs(reverseQuery);
+            if (!reverseSnap.empty) {
+                alert("Este usuário já te enviou uma solicitação. Aceite a solicitação pendente.");
+                return;
+            }
+            
+            // Verificar se o usuário existe no sistema
+            const exists = await userExists(emailTrimmed);
+            if (!exists) {
+                alert("Usuário não encontrado. Certifique-se de que a pessoa já está cadastrada no chat.");
+                return;
+            }
+            
+            try {
+                await addDoc(collection(db, "solicitacoes"), {
+                    remetente: currentUserEmail,
+                    destinatario: emailTrimmed,
+                    status: "pendente",
+                    timestamp: serverTimestamp(),
+                    remetenteNome: currentUserDisplayName || currentUserEmail.split('@')[0]
+                });
+                alert(`Solicitação de amizade enviada para ${emailTrimmed}!`);
+            } catch (error) {
+                console.error("Erro ao enviar solicitação:", error);
+                alert("Erro ao enviar solicitação.");
+            }
+        };
+        
+        // Aceitar solicitação
+        window.acceptRequest = async function(requestId, remetenteEmail, remetenteNome) {
+            try {
+                const requestRef = doc(db, "solicitacoes", requestId);
+                await updateDoc(requestRef, { status: "aceito" });
+                
+                // Adicionar nas listas de amigos (usando subcoleção ou documento de amizade)
+                // Vamos criar um documento de amizade para referência
+                const friendshipId = [currentUserEmail, remetenteEmail].sort().join('_');
+                const friendshipRef = doc(db, "amizades", friendshipId);
+                await setDoc(friendshipRef, {
+                    usuarios: [currentUserEmail, remetenteEmail],
+                    criadoEm: serverTimestamp(),
+                    status: "ativa"
+                });
+                
+                alert(`Você agora é amigo(a) de ${remetenteNome || remetenteEmail.split('@')[0]}!`);
+                // Recarregar lista de amigos
+                loadFriendsAndContacts();
+            } catch (error) {
+                console.error("Erro ao aceitar solicitação:", error);
+                alert("Erro ao aceitar solicitação.");
+            }
+        };
+        
+        // Recusar solicitação
+        window.rejectRequest = async function(requestId, remetenteEmail) {
+            try {
+                const requestRef = doc(db, "solicitacoes", requestId);
+                await deleteDoc(requestRef);
+                alert("Solicitação recusada.");
+            } catch (error) {
+                console.error("Erro ao recusar solicitação:", error);
+                alert("Erro ao recusar solicitação.");
+            }
+        };
+        
+        // Carregar solicitações pendentes (para o usuário logado como destinatário)
+        function loadPendingRequests() {
+            if (!currentUserEmail) return;
+            
+            if (pendingRequestsListener) {
+                pendingRequestsListener();
+            }
+            
+            const requestsRef = collection(db, "solicitacoes");
+            const q = query(requestsRef, 
+                where("destinatario", "==", currentUserEmail),
+                where("status", "==", "pendente")
+            );
+            
+            pendingRequestsListener = onSnapshot(q, (snapshot) => {
+                const requests = [];
+                snapshot.forEach(doc => {
+                    requests.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Atualizar badge e painel
+                const count = requests.length;
+                if (count > 0) {
+                    notificationBadge.style.display = 'flex';
+                    notificationBadge.textContent = count > 9 ? '9+' : count;
+                } else {
+                    notificationBadge.style.display = 'none';
+                }
+                
+                // Renderizar lista de solicitações
+                if (notificationList) {
+                    if (requests.length === 0) {
+                        notificationList.innerHTML = '<div class="no-requests">Nenhuma solicitação pendente</div>';
+                    } else {
+                        notificationList.innerHTML = '';
+                        requests.forEach(req => {
+                            const requestDiv = document.createElement('div');
+                            requestDiv.className = 'request-item';
+                            const nomeExib = req.remetenteNome || req.remetente.split('@')[0];
+                            requestDiv.innerHTML = `
+                                <div class="request-info">
+                                    <div class="request-name">${escapeHtml(nomeExib)}</div>
+                                    <div class="request-email">${escapeHtml(req.remetente)}</div>
+                                </div>
+                                <div class="request-actions">
+                                    <button class="accept-btn" onclick="window.acceptRequest('${req.id}', '${req.remetente}', '${nomeExib}')">Aceitar</button>
+                                    <button class="reject-btn" onclick="window.rejectRequest('${req.id}', '${req.remetente}')">Recusar</button>
+                                </div>
+                            `;
+                            notificationList.appendChild(requestDiv);
+                        });
+                    }
+                }
+            }, (error) => {
+                console.error("Erro no listener de solicitações:", error);
+            });
+        }
+        
+        // Carregar lista de amigos aceitos (via amizades)
+        async function loadFriendsAndContacts() {
+            if (!currentUserEmail) return;
+            
+            const amigosSet = new Set();
+            const amizadesRef = collection(db, "amizades");
+            const q = query(amizadesRef, where("usuarios", "array-contains", currentUserEmail));
+            
+            try {
+                const snapshot = await getDocs(q);
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const outroUsuario = data.usuarios.find(u => u !== currentUserEmail);
+                    if (outroUsuario) {
+                        amigosSet.add(outroUsuario);
+                    }
+                });
+                
+                friendsList = Array.from(amigosSet);
+                
+                // Buscar nomes amigáveis para cada amigo
+                for (const email of friendsList) {
+                    if (!friendlyNameMap[email]) {
+                        const userDoc = await getDoc(doc(db, "usuarios", email.replace(/\./g, '_')));
+                        if (userDoc.exists()) {
+                            friendlyNameMap[email] = userDoc.data().displayName || email.split('@')[0];
+                        } else {
+                            friendlyNameMap[email] = email.split('@')[0];
+                        }
+                    }
+                }
+                
+                // Iniciar listeners de mensagens não lidas para cada amigo
+                for (const email of friendsList) {
+                    startUnreadListener(email, friendlyNameMap[email]);
+                }
+                
+                // Atualizar tela principal com a lista de amigos
+                renderFriendsList();
+            } catch (error) {
+                console.error("Erro ao carregar amigos:", error);
+            }
+        }
+        
+        // Renderizar lista de amigos na tela principal
+        function renderFriendsList() {
+            const contactListMain = document.getElementById('contact-list-main');
+            if (!contactListMain) return;
+            
+            if (friendsList.length === 0) {
+                contactListMain.innerHTML = '<div class="no-results">😊 Você ainda não tem amigos. Envie solicitações de amizade!</div>';
+                return;
+            }
+            
+            const contacts = friendsList.map(email => ({
+                email: email,
+                name: friendlyNameMap[email] || email.split('@')[0],
+                initial: (friendlyNameMap[email] || email.split('@')[0]).charAt(0).toUpperCase()
+            }));
+            
+            renderContactsList(contacts);
         }
         
         function renderContactsList(contacts) {
@@ -527,7 +613,7 @@
             if (contacts.length === 0) {
                 const noResults = document.createElement('div');
                 noResults.className = 'no-results';
-                noResults.innerHTML = '🔍 Nenhum contato encontrado';
+                noResults.innerHTML = '🔍 Nenhum amigo encontrado';
                 contactListMain.appendChild(noResults);
                 return;
             }
@@ -539,8 +625,8 @@
                 contactDiv.innerHTML = `
                     <div class="contact-avatar">${contact.initial}</div>
                     <div class="contact-info">
-                        <div class="contact-name-main">${contact.name}</div>
-                        <div class="contact-email-main">${contact.email}</div>
+                        <div class="contact-name-main">${escapeHtml(contact.name)}</div>
+                        <div class="contact-email-main">${escapeHtml(contact.email)}</div>
                     </div>
                 `;
                 contactDiv.onclick = (function(email, name) {
@@ -551,85 +637,144 @@
                 })(contact.email, contact.name);
                 contactListMain.appendChild(contactDiv);
                 
-                // Adicionar classe blinking se necessário
                 if (blinkingContacts.has(contact.email)) {
                     contactDiv.classList.add('blinking');
                 }
             });
         }
         
-        // Carregar contatos na tela principal
-        async function loadContactsOnMainScreen() {
-            if (!currentUserEmail) return;
+        function filterContacts(searchTerm) {
+            if (!searchTerm.trim()) {
+                const contacts = friendsList.map(email => ({
+                    email: email,
+                    name: friendlyNameMap[email] || email.split('@')[0],
+                    initial: (friendlyNameMap[email] || email.split('@')[0]).charAt(0).toUpperCase()
+                }));
+                renderContactsList(contacts);
+                return;
+            }
             
-            const contactListMain = document.getElementById('contact-list-main');
-            contactListMain.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">Carregando contatos...</div>';
-            
-            try {
-                const usuariosRef = collection(db, "usuarios");
-                const q = query(usuariosRef, where("email", "!=", currentUserEmail));
-                const snapshot = await getDocs(q);
-                
-                allContacts = []; // Limpar array de contatos
-                
-                if (snapshot.empty) {
-                    const emptyMsg = document.createElement('div');
-                    emptyMsg.style.textAlign = "center";
-                    emptyMsg.style.padding = "40px";
-                    emptyMsg.style.color = "#999";
-                    emptyMsg.innerText = "Nenhum contato encontrado. Adicione amigos clicando no botão abaixo!";
-                    contactListMain.appendChild(emptyMsg);
-                } else {
-                    snapshot.forEach(docSnap => {
-                        const userData = docSnap.data();
-                        const userEmail = userData.email;
-                        if (userEmail === currentUserEmail) return;
-                        const nomeExib = userData.displayName || userEmail.split('@')[0];
-                        const initial = nomeExib.charAt(0).toUpperCase();
-                        
-                        friendlyNameMap[userEmail] = nomeExib;
-                        
-                        // Armazenar contato no array para busca
-                        allContacts.push({
-                            email: userEmail,
-                            name: nomeExib,
-                            initial: initial
-                        });
-                        
-                        // Iniciar listener de mensagens não lidas para este contato
-                        startUnreadListener(userEmail, nomeExib);
-                    });
-                    
-                    // Renderizar lista inicial
-                    renderContactsList(allContacts);
+            const term = searchTerm.toLowerCase().trim();
+            const filtered = friendsList.filter(email => {
+                const name = (friendlyNameMap[email] || email.split('@')[0]).toLowerCase();
+                const emailLower = email.toLowerCase();
+                return name.includes(term) || emailLower.includes(term);
+            }).map(email => ({
+                email: email,
+                name: friendlyNameMap[email] || email.split('@')[0],
+                initial: (friendlyNameMap[email] || email.split('@')[0]).charAt(0).toUpperCase()
+            }));
+            renderContactsList(filtered);
+        }
+        
+        // Função auxiliar para escapar HTML
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
+        function stopBlinking(contactEmail) {
+            if (blinkingContacts.has(contactEmail)) {
+                blinkingContacts.delete(contactEmail);
+                const contactElement = document.querySelector(`.contact-item-main[data-email="${contactEmail}"]`);
+                if (contactElement) {
+                    contactElement.classList.remove('blinking');
                 }
-            } catch (err) {
-                console.warn("Erro ao carregar contatos:", err);
-                contactListMain.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">Erro ao carregar contatos</div>';
             }
         }
         
-        // Função para limpar busca
-        window.clearSearch = function() {
-            const searchInput = document.getElementById('search-input');
-            searchInput.value = '';
-            filterContacts('');
+        function startUnreadListener(contactEmail, contactName) {
+            if (!currentUserEmail) return;
+            if (unreadListeners.has(contactEmail)) {
+                unreadListeners.get(contactEmail)();
+                unreadListeners.delete(contactEmail);
+            }
+            
+            const conversationId = getConversationId(currentUserEmail, contactEmail);
+            const messagesRef = collection(db, "conversas", conversationId, "mensagens");
+            const q = query(messagesRef, orderBy("timestamp", "desc"));
+            const lastReadRef = doc(db, "leituras", `${currentUserEmail}_${contactEmail}`);
+            
+            const unsubscribeListener = onSnapshot(q, async (snapshot) => {
+                if (snapshot.empty) return;
+                const isCurrentConversation = (currentContact === contactEmail);
+                const lastMessage = snapshot.docs[0];
+                const lastMessageData = lastMessage.data();
+                const lastMessageTimestamp = lastMessageData.timestamp;
+                const lastMessageSender = lastMessageData.enviadoPor;
+                
+                if (lastMessageSender === currentUserEmail) {
+                    stopBlinking(contactEmail);
+                    return;
+                }
+                
+                const lastReadDoc = await getDoc(lastReadRef);
+                let lastReadTimestamp = null;
+                if (lastReadDoc.exists()) {
+                    lastReadTimestamp = lastReadDoc.data().lastRead;
+                }
+                
+                const needBlink = (!lastReadTimestamp || 
+                    (lastMessageTimestamp && lastMessageTimestamp.toDate() > lastReadTimestamp.toDate()));
+                
+                if (needBlink && !isCurrentConversation) {
+                    if (!blinkingContacts.has(contactEmail)) {
+                        blinkingContacts.add(contactEmail);
+                        const contactElement = document.querySelector(`.contact-item-main[data-email="${contactEmail}"]`);
+                        if (contactElement) {
+                            contactElement.classList.add('blinking');
+                        }
+                    }
+                } else {
+                    stopBlinking(contactEmail);
+                }
+            });
+            
+            unreadListeners.set(contactEmail, unsubscribeListener);
+        }
+        
+        async function markAsRead(contactEmail) {
+            if (!currentUserEmail || !contactEmail) return;
+            const lastReadRef = doc(db, "leituras", `${currentUserEmail}_${contactEmail}`);
+            await setDoc(lastReadRef, {
+                lastRead: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+            stopBlinking(contactEmail);
+        }
+        
+        window.goToMainScreen = function() {
+            if (!currentUserEmail) return;
+            if (unsubscribe) {
+                unsubscribe();
+                unsubscribe = null;
+            }
+            if (currentContact) {
+                markAsRead(currentContact);
+            }
+            currentContact = null;
+            chatTitle.innerText = "Chat";
+            chatContainer.classList.add('hidden');
+            mainScreen.classList.remove('hidden');
+            renderFriendsList();
         };
         
-        // Iniciar chat a partir da tela principal
+        window.clearSearch = function() {
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                searchInput.value = '';
+                filterContacts('');
+            }
+        };
+        
         function startChatFromMain(contactEmail, displayName) {
-            if (!currentUserEmail) {
-                alert("Faça login primeiro!");
-                return;
-            }
-            if (!contactEmail) {
-                alert("Contato inválido.");
-                return;
-            }
-            
-            // Marcar como lido ao entrar na conversa
+            if (!currentUserEmail) return;
             markAsRead(contactEmail);
-            
             currentContact = contactEmail;
             chatTitle.innerText = displayName;
             mainScreen.classList.add('hidden');
@@ -638,7 +783,144 @@
             messageInput.focus();
         }
         
-        // Funções de autenticação
+        function getConversationId(user1, user2) {
+            return [user1, user2].sort().join('_');
+        }
+        
+        function loadMessages(contactEmail, contactFriendlyName) {
+            if (unsubscribe) {
+                unsubscribe();
+                unsubscribe = null;
+            }
+            if (!currentUserEmail || !contactEmail) return;
+            
+            const conversationId = getConversationId(currentUserEmail, contactEmail);
+            const messagesRef = collection(db, "conversas", conversationId, "mensagens");
+            const q = query(messagesRef, orderBy("timestamp", "asc"));
+            
+            chatArea.innerHTML = "";
+            unsubscribe = onSnapshot(q, (snapshot) => {
+                chatArea.innerHTML = "";
+                if (snapshot.empty) {
+                    const emptyMsg = document.createElement('p');
+                    emptyMsg.style.textAlign = "center";
+                    emptyMsg.style.color = "#777";
+                    emptyMsg.style.marginTop = "20px";
+                    emptyMsg.innerText = "Nenhuma mensagem ainda. Envie um olá!";
+                    chatArea.appendChild(emptyMsg);
+                } else {
+                    snapshot.forEach(docSnap => {
+                        const data = docSnap.data();
+                        const messageText = data.texto;
+                        const sender = data.enviadoPor;
+                        const timestamp = data.timestamp ? data.timestamp.toDate() : new Date();
+                        const timeStr = timestamp.toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' });
+                        
+                        const messageDiv = document.createElement('div');
+                        if (sender === currentUserEmail) {
+                            messageDiv.className = 'message';
+                            messageDiv.innerText = messageText;
+                            const smallTime = document.createElement('small');
+                            smallTime.innerText = timeStr;
+                            messageDiv.appendChild(smallTime);
+                        } else {
+                            messageDiv.className = 'message received';
+                            const strong = document.createElement('strong');
+                            const senderName = friendlyNameMap[sender] || sender.split('@')[0];
+                            strong.innerText = senderName;
+                            messageDiv.appendChild(strong);
+                            const textSpan = document.createElement('span');
+                            textSpan.innerText = messageText;
+                            messageDiv.appendChild(textSpan);
+                            const smallTime = document.createElement('small');
+                            smallTime.innerText = timeStr;
+                            messageDiv.appendChild(smallTime);
+                        }
+                        chatArea.appendChild(messageDiv);
+                    });
+                }
+                chatArea.scrollTop = chatArea.scrollHeight;
+            }, (error) => {
+                console.error("Erro no listener:", error);
+                chatArea.innerHTML = '<p style="text-align:center;color:red;">Erro ao carregar mensagens.</p>';
+            });
+        }
+        
+        window.sendMessage = async function() {
+            if (!currentUserEmail || !currentContact) {
+                alert("Selecione um contato para conversar!");
+                return;
+            }
+            const text = messageInput.value.trim();
+            if (text === "") return;
+            
+            const conversationId = getConversationId(currentUserEmail, currentContact);
+            const messagesRef = collection(db, "conversas", conversationId, "mensagens");
+            try {
+                await addDoc(messagesRef, {
+                    texto: text,
+                    timestamp: serverTimestamp(),
+                    enviadoPor: currentUserEmail,
+                    nomeExibicao: currentUserDisplayName || currentUserEmail.split('@')[0]
+                });
+                messageInput.value = "";
+            } catch (error) {
+                console.error("Erro ao enviar:", error);
+                alert("Erro ao enviar mensagem.");
+            }
+        };
+        
+        async function registerUserInDirectory(userEmail) {
+            if (!userEmail) return;
+            const userDocRef = doc(db, "usuarios", userEmail.replace(/\./g, '_'));
+            const docSnap = await getDoc(userDocRef);
+            if (!docSnap.exists()) {
+                await setDoc(userDocRef, {
+                    email: userEmail,
+                    displayName: userEmail.split('@')[0],
+                    createdAt: serverTimestamp(),
+                    lastSeen: serverTimestamp()
+                });
+            } else {
+                await updateDoc(userDocRef, { lastSeen: serverTimestamp() });
+            }
+        }
+        
+        window.toggleNotificationPanel = function() {
+            notificationPanel.classList.toggle('show');
+        };
+        
+        window.toggleSettingsMenu = function() {
+            const menu = document.getElementById('settings-menu');
+            menu.classList.toggle('show');
+        };
+        
+        window.logout = async function() {
+            try {
+                for (const [email, unsubscribeFn] of unreadListeners) {
+                    unsubscribeFn();
+                }
+                unreadListeners.clear();
+                blinkingContacts.clear();
+                if (pendingRequestsListener) pendingRequestsListener();
+                if (friendsListener) friendsListener();
+                await signOut(auth);
+                if (unsubscribe) unsubscribe();
+                currentContact = null;
+                chatTitle.innerText = 'Chat';
+                chatArea.innerHTML = '<p style="text-align: center; color: #777; margin-top: 20px;">Faça login para conversar</p>';
+                currentUserEmail = null;
+                chatContainer.classList.add('hidden');
+                mainScreen.classList.add('hidden');
+                authScreen.style.display = 'flex';
+                document.getElementById('settings-menu').classList.remove('show');
+                notificationPanel.classList.remove('show');
+            } catch (error) {
+                console.error('Erro ao sair:', error);
+            }
+        };
+        
+        // Autenticação
         function showError(msg) {
             authError.textContent = msg;
             authError.style.display = 'block';
@@ -691,7 +973,7 @@
                     showSuccess('Login realizado!');
                 } else {
                     await createUserWithEmailAndPassword(auth, email, password);
-                    showSuccess('Cadastro realizado! Agora você pode conversar com amigos.');
+                    showSuccess('Cadastro realizado! Agora envie solicitações de amizade.');
                 }
             } catch (error) {
                 let msg = 'Erro na autenticação. ';
@@ -706,427 +988,24 @@
             }
         };
         
-        // Função de logout (mantida para o botão Sair)
-        window.logout = async function() {
-            try {
-                // Limpar todos os listeners de mensagens não lidas
-                for (const [email, unsubscribeFn] of unreadListeners) {
-                    unsubscribeFn();
-                }
-                unreadListeners.clear();
-                blinkingContacts.clear();
-                
-                await signOut(auth);
-                if (unsubscribe) {
-                    unsubscribe();
-                    unsubscribe = null;
-                }
-                currentContact = null;
-                chatTitle.innerText = 'Chat';
-                chatArea.innerHTML = '<p id="placeholder" style="text-align: center; color: #777; margin-top: 20px;">Selecione um contato para começar</p>';
-                currentUserEmail = null;
-                const statusSpan = document.getElementById('contact-status-header');
-                if(statusSpan) statusSpan.remove();
-                // Fechar menu de configurações
-                document.getElementById('settings-menu').classList.remove('show');
-                chatContainer.classList.add('hidden');
-                mainScreen.classList.add('hidden');
-                // Garantir que a tela de autenticação seja mostrada novamente
-                authScreen.style.display = 'flex';
-                // Limpar campos de login
-                authEmail.value = '';
-                authPassword.value = '';
-                authConfirmPassword.value = '';
-            } catch (error) {
-                console.error('Erro ao sair:', error);
-            }
-        };
-        
-        // Função para obter o ID único da conversa entre dois emails
-        function getConversationId(user1, user2) {
-            return [user1, user2].sort().join('_');
-        }
-        
-        // Função para Limpar Mensagens
-        window.clearMessages = async function() {
-            if (!currentUserEmail || !currentContact) {
-                alert("Nenhuma conversa selecionada.");
-                return;
-            }
-            if (confirm("Tem certeza que deseja limpar todas as mensagens desta conversa? Essa ação não pode ser desfeita.")) {
-                const conversationId = getConversationId(currentUserEmail, currentContact);
-                const messagesRef = collection(db, "conversas", conversationId, "mensagens");
-                const q = query(messagesRef);
-                const snapshot = await getDocs(q);
-                const deletePromises = [];
-                snapshot.forEach(docSnap => {
-                    deletePromises.push(deleteDoc(docSnap.ref));
-                });
-                try {
-                    await Promise.all(deletePromises);
-                    alert("Todas as mensagens foram removidas!");
-                    if (unsubscribe) {
-                        unsubscribe();
-                        unsubscribe = null;
-                    }
-                    chatArea.innerHTML = '<p style="text-align: center; color: #777; margin-top: 20px;">Conversa limpa. Envie uma nova mensagem!</p>';
-                    loadMessages(currentContact, friendlyNameMap[currentContact] || currentContact.split('@')[0]);
-                } catch (error) {
-                    console.error("Erro ao limpar mensagens:", error);
-                    alert("Erro ao limpar mensagens.");
-                }
-            }
-            document.getElementById('settings-menu').classList.remove('show');
-        };
-        
-        // Função para Excluir Conversa
-        window.deleteConversation = async function() {
-            if (!currentUserEmail || !currentContact) {
-                alert("Nenhuma conversa selecionada.");
-                return;
-            }
-            if (confirm("Tem certeza que deseja EXCLUIR PERMANENTEMENTE esta conversa? Todas as mensagens serão apagadas e não poderão ser recuperadas.")) {
-                const conversationId = getConversationId(currentUserEmail, currentContact);
-                const conversationRef = doc(db, "conversas", conversationId);
-                try {
-                    const messagesRef = collection(db, "conversas", conversationId, "mensagens");
-                    const q = query(messagesRef);
-                    const snapshot = await getDocs(q);
-                    const deletePromises = [];
-                    snapshot.forEach(docSnap => {
-                        deletePromises.push(deleteDoc(docSnap.ref));
-                    });
-                    await Promise.all(deletePromises);
-                    await deleteDoc(conversationRef);
-                    alert("Conversa excluída com sucesso!");
-                    if (unsubscribe) {
-                        unsubscribe();
-                        unsubscribe = null;
-                    }
-                    currentContact = null;
-                    chatTitle.innerText = "Chat";
-                    chatArea.innerHTML = '<p id="placeholder" style="text-align: center; color: #777; margin-top: 20px;">Conversa excluída. Selecione outro contato.</p>';
-                    goToMainScreen();
-                } catch (error) {
-                    console.error("Erro ao excluir conversa:", error);
-                    alert("Erro ao excluir conversa.");
-                }
-            }
-            document.getElementById('settings-menu').classList.remove('show');
-        };
-        
-        // Função para Deletar Usuário (remover contato da agenda)
-        window.deleteContact = async function() {
-            if (!currentUserEmail || !currentContact) {
-                alert("Nenhum contato selecionado.");
-                return;
-            }
-            const contactName = friendlyNameMap[currentContact] || currentContact.split('@')[0];
-            if (confirm(`Tem certeza que deseja remover "${contactName}" da sua lista de contatos? Essa ação não apaga as mensagens, apenas remove o contato da sua agenda.`)) {
-                try {
-                    const userContactsRef = doc(db, "usuarios_contatos", currentUserEmail.replace(/\./g, '_'));
-                    const userContactsSnap = await getDoc(userContactsRef);
-                    if (userContactsSnap.exists()) {
-                        const contacts = userContactsSnap.data().contacts || [];
-                        const updatedContacts = contacts.filter(c => c !== currentContact);
-                        await updateDoc(userContactsRef, { contacts: updatedContacts });
-                    }
-                    alert(`Contato ${contactName} removido da sua agenda!`);
-                    
-                    // Parar listener deste contato
-                    if (unreadListeners.has(currentContact)) {
-                        unreadListeners.get(currentContact)();
-                        unreadListeners.delete(currentContact);
-                    }
-                    stopBlinking(currentContact);
-                    
-                    currentContact = null;
-                    chatTitle.innerText = "Chat";
-                    chatArea.innerHTML = '<p id="placeholder" style="text-align: center; color: #777; margin-top: 20px;">Contato removido. Selecione outro contato.</p>';
-                    if (unsubscribe) {
-                        unsubscribe();
-                        unsubscribe = null;
-                    }
-                    goToMainScreen();
-                } catch (error) {
-                    console.error("Erro ao remover contato:", error);
-                    alert("Erro ao remover contato.");
-                }
-            }
-            document.getElementById('settings-menu').classList.remove('show');
-        };
-        
-        // Carregar mensagens em tempo real
-        function loadMessages(contactEmail, contactFriendlyName) {
-            if (unsubscribe) {
-                unsubscribe();
-                unsubscribe = null;
-            }
-            if (!currentUserEmail || !contactEmail) return;
-            
-            const conversationId = getConversationId(currentUserEmail, contactEmail);
-            const messagesRef = collection(db, "conversas", conversationId, "mensagens");
-            const q = query(messagesRef, orderBy("timestamp", "asc"));
-            
-            chatArea.innerHTML = "";
-            
-            unsubscribe = onSnapshot(q, (snapshot) => {
-                chatArea.innerHTML = "";
-                if (snapshot.empty) {
-                    const emptyMsg = document.createElement('p');
-                    emptyMsg.style.textAlign = "center";
-                    emptyMsg.style.color = "#777";
-                    emptyMsg.style.marginTop = "20px";
-                    emptyMsg.innerText = "Nenhuma mensagem ainda. Envie um olá!";
-                    chatArea.appendChild(emptyMsg);
-                } else {
-                    snapshot.forEach(docSnap => {
-                        const data = docSnap.data();
-                        const messageText = data.texto;
-                        const sender = data.enviadoPor;
-                        const timestamp = data.timestamp ? data.timestamp.toDate() : new Date();
-                        const timeStr = timestamp.toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' });
-                        
-                        const messageDiv = document.createElement('div');
-                        if (sender === currentUserEmail) {
-                            messageDiv.className = 'message';
-                            messageDiv.innerText = messageText;
-                            const smallTime = document.createElement('small');
-                            smallTime.innerText = timeStr;
-                            messageDiv.appendChild(smallTime);
-                        } else {
-                            messageDiv.className = 'message received';
-                            const strong = document.createElement('strong');
-                            const senderName = friendlyNameMap[sender] || sender.split('@')[0];
-                            strong.innerText = senderName;
-                            messageDiv.appendChild(strong);
-                            const textSpan = document.createElement('span');
-                            textSpan.innerText = messageText;
-                            messageDiv.appendChild(textSpan);
-                            const smallTime = document.createElement('small');
-                            smallTime.innerText = timeStr;
-                            messageDiv.appendChild(smallTime);
-                        }
-                        chatArea.appendChild(messageDiv);
-                    });
-                }
-                chatArea.scrollTop = chatArea.scrollHeight;
-            }, (error) => {
-                console.error("Erro no listener:", error);
-                chatArea.innerHTML = '<p style="text-align:center;color:red;">Erro ao carregar mensagens.</p>';
-            });
-        }
-        
-        // Enviar mensagem
-        window.sendMessage = async function() {
-            if (!currentUserEmail) {
-                alert("Faça login primeiro!");
-                return;
-            }
-            if (!currentContact) {
-                alert("Selecione um contato para conversar!");
-                return;
-            }
-            const text = messageInput.value.trim();
-            if (text === "") return;
-            
-            const conversationId = getConversationId(currentUserEmail, currentContact);
-            const messagesRef = collection(db, "conversas", conversationId, "mensagens");
-            try {
-                await addDoc(messagesRef, {
-                    texto: text,
-                    timestamp: serverTimestamp(),
-                    enviadoPor: currentUserEmail,
-                    nomeExibicao: currentUserDisplayName || currentUserEmail.split('@')[0]
-                });
-                messageInput.value = "";
-            } catch (error) {
-                console.error("Erro ao enviar:", error);
-                alert("Erro ao enviar mensagem.");
-            }
-        };
-        
-        // Iniciar conversa
-        window.startChat = function(contactEmail, displayName) {
-            if (!currentUserEmail) {
-                alert("Faça login primeiro!");
-                return;
-            }
-            if (!contactEmail) {
-                alert("Contato inválido.");
-                return;
-            }
-            if (currentContact === contactEmail) {
-                toggleContacts();
-                return;
-            }
-            
-            // Marcar como lido ao abrir a conversa
-            markAsRead(contactEmail);
-            
-            currentContact = contactEmail;
-            chatTitle.innerText = displayName;
-            loadMessages(contactEmail, displayName);
-            toggleContacts();
-            messageInput.focus();
-        };
-        
-        // Lista de contatos dinâmica
-        async function refreshContactsList() {
-            if (!currentUserEmail) return;
-            
-            const contactListContainer = document.getElementById('contact-list');
-            const existingItems = contactListContainer.querySelectorAll('.contact-item:not(.static-header)');
-            existingItems.forEach(el => el.remove());
-            
-            try {
-                const usuariosRef = collection(db, "usuarios");
-                const q = query(usuariosRef, where("email", "!=", currentUserEmail));
-                const snapshot = await getDocs(q);
-                snapshot.forEach(docSnap => {
-                    const userData = docSnap.data();
-                    const userEmail = userData.email;
-                    if (userEmail === currentUserEmail) return;
-                    const nomeExib = userData.displayName || userEmail.split('@')[0];
-                    friendlyNameMap[userEmail] = nomeExib;
-                    
-                    const contactDiv = document.createElement('div');
-                    contactDiv.className = 'contact-item';
-                    contactDiv.setAttribute('data-email', userEmail);
-                    contactDiv.innerHTML = `<div><span class="contact-name">${nomeExib}</span><span class="contact-status"> (ativo)</span></div>`;
-                    contactDiv.onclick = (function(email, name) {
-                        return function() { 
-                            markAsRead(email);
-                            window.startChat(email, name); 
-                        };
-                    })(userEmail, nomeExib);
-                    contactListContainer.appendChild(contactDiv);
-                    
-                    // Adicionar classe blinking se necessário
-                    if (blinkingContacts.has(userEmail)) {
-                        contactDiv.classList.add('blinking');
-                    }
-                });
-            } catch (err) {
-                console.warn("Erro ao carregar contatos dinâmicos:", err);
-            }
-            
-            const addFriendBtn = document.createElement('div');
-            addFriendBtn.className = 'contact-item';
-            addFriendBtn.style.backgroundColor = "#e9f5f2";
-            addFriendBtn.style.marginTop = "10px";
-            addFriendBtn.innerHTML = `<div><span class="contact-name">➕ Adicionar amigo por e-mail</span></div>`;
-            addFriendBtn.onclick = () => {
-                const friendEmail = prompt("Digite o e-mail do seu amigo (ex: amigo@exemplo.com):");
-                if (friendEmail && friendEmail.trim() !== "") {
-                    if (friendEmail === currentUserEmail) {
-                        alert("Você não pode adicionar a si mesmo.");
-                        return;
-                    }
-                    addDoc(collection(db, "usuarios_sugeridos"), {
-                        email: friendEmail,
-                        addedBy: currentUserEmail,
-                        timestamp: serverTimestamp()
-                    }).then(() => {
-                        alert(`Solicitação enviada! Quando ${friendEmail} fizer login, poderá conversar.`);
-                        refreshContactsList();
-                        loadContactsOnMainScreen();
-                    }).catch(e => {
-                        alert("Erro ao adicionar. Mas você pode começar a conversar se ele já existir.");
-                        refreshContactsList();
-                        loadContactsOnMainScreen();
-                    });
-                }
-            };
-            contactListContainer.appendChild(addFriendBtn);
-            
-            const closeBtn = document.createElement('button');
-            closeBtn.innerText = "Fechar";
-            closeBtn.style.marginTop = "20px";
-            closeBtn.style.padding = "10px";
-            closeBtn.style.width = "100%";
-            closeBtn.style.border = "none";
-            closeBtn.style.borderRadius = "30px";
-            closeBtn.style.background = "#075e54";
-            closeBtn.style.color = "white";
-            closeBtn.onclick = () => toggleContacts();
-            contactListContainer.appendChild(closeBtn);
-        }
-        
-        // Adicionar amigo pela tela principal
-        window.addFriendFromMain = function() {
-            const friendEmail = prompt("Digite o e-mail do seu amigo (ex: amigo@exemplo.com):");
-            if (friendEmail && friendEmail.trim() !== "") {
-                if (friendEmail === currentUserEmail) {
-                    alert("Você não pode adicionar a si mesmo.");
-                    return;
-                }
-                addDoc(collection(db, "usuarios_sugeridos"), {
-                    email: friendEmail,
-                    addedBy: currentUserEmail,
-                    timestamp: serverTimestamp()
-                }).then(() => {
-                    alert(`Solicitação enviada! Quando ${friendEmail} fizer login, poderá conversar.`);
-                    loadContactsOnMainScreen();
-                }).catch(e => {
-                    alert("Erro ao adicionar. Mas você pode começar a conversar se ele já existir.");
-                    loadContactsOnMainScreen();
-                });
-            }
-        };
-        
-        // Registrar usuário
-        async function registerUserInDirectory(userEmail) {
-            if (!userEmail) return;
-            const userDocRef = doc(db, "usuarios", userEmail.replace(/\./g, '_'));
-            const docSnap = await getDoc(userDocRef);
-            if (!docSnap.exists()) {
-                await setDoc(userDocRef, {
-                    email: userEmail,
-                    displayName: userEmail.split('@')[0],
-                    createdAt: serverTimestamp(),
-                    lastSeen: serverTimestamp()
-                });
-            } else {
-                await updateDoc(userDocRef, { lastSeen: serverTimestamp() });
-            }
-        }
-        
-        // Alternar modal contatos
-        window.toggleContacts = function() {
-            if (!currentUserEmail) return;
-            const list = document.getElementById('contact-list');
-            if (list.style.display === 'block') {
-                list.style.display = 'none';
-            } else {
-                refreshContactsList();
-                list.style.display = 'block';
-            }
-        };
-        
-        // Alternar menu de configurações
-        window.toggleSettingsMenu = function() {
-            const menu = document.getElementById('settings-menu');
-            menu.classList.toggle('show');
-        };
-        
-        // Fechar menu ao clicar fora
         document.addEventListener('click', function(e) {
             const menu = document.getElementById('settings-menu');
             const settingsBtn = document.querySelector('.settings-btn');
             if (menu && menu.classList.contains('show') && !menu.contains(e.target) && e.target !== settingsBtn && !settingsBtn.contains(e.target)) {
                 menu.classList.remove('show');
             }
-            const contactList = document.getElementById('contact-list');
-            const addBtn = document.querySelector('.add-btn');
-            if (contactList && contactList.style.display === 'block' && !contactList.contains(e.target) && e.target !== addBtn && !addBtn.contains(e.target)) {
-                if (!e.target.closest('.contact-item')) {
-                    contactList.style.display = 'none';
-                }
+            const panel = document.getElementById('notification-panel');
+            const notifBtn = document.getElementById('notification-btn');
+            if (panel && panel.classList.contains('show') && !panel.contains(e.target) && e.target !== notifBtn && !notifBtn.contains(e.target)) {
+                panel.classList.remove('show');
             }
         });
         
-        // Estado de autenticação principal
+        document.getElementById('message-input')?.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') window.sendMessage();
+        });
+        
+        // Estado de autenticação
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUserEmail = user.email;
@@ -1138,73 +1017,43 @@
                 authPassword.value = '';
                 authConfirmPassword.value = '';
                 
-                let userSpan = document.getElementById('user-email-display');
-                if (!userSpan) {
-                    const titleSpan = document.getElementById('chat-title');
-                    const smallEmail = document.createElement('small');
-                    smallEmail.id = 'user-email-display';
-                    smallEmail.style.fontSize = '12px';
-                    smallEmail.style.display = 'block';
-                    smallEmail.style.opacity = '0.8';
-                    smallEmail.innerText = user.email.split('@')[0];
-                    titleSpan.parentNode.insertBefore(smallEmail, titleSpan.nextSibling);
-                } else {
-                    userSpan.innerText = user.email.split('@')[0];
-                }
-                
-                // Atualizar menu com usuário logado
-                updateSettingsMenuWithUser();
-                
-                // Mostrar tela principal
                 mainScreen.classList.remove('hidden');
                 chatContainer.classList.add('hidden');
-                loadContactsOnMainScreen();
+                
+                // Carregar amigos e solicitações
+                await loadFriendsAndContacts();
+                loadPendingRequests();
             } else {
-                // Limpar todos os listeners antes de sair
                 for (const [email, unsubscribeFn] of unreadListeners) {
                     unsubscribeFn();
                 }
                 unreadListeners.clear();
                 blinkingContacts.clear();
-                
+                if (pendingRequestsListener) pendingRequestsListener();
+                friendsList = [];
                 currentUserEmail = null;
                 currentContact = null;
-                if (unsubscribe) {
-                    unsubscribe();
-                    unsubscribe = null;
-                }
-                // Garantir que a tela de autenticação apareça
+                if (unsubscribe) unsubscribe();
                 authScreen.style.display = 'flex';
                 chatTitle.innerText = 'Chat';
-                chatArea.innerHTML = '<p id="placeholder" style="text-align: center; color: #777; margin-top: 20px;">Faça login para conversar com seus amigos</p>';
-                const userSpanElem = document.getElementById('user-email-display');
-                if (userSpanElem) userSpanElem.remove();
-                if (!isLoginMode) window.toggleAuthMode();
-                const contactListDivInner = document.getElementById('contact-list');
-                if (contactListDivInner) {
-                    const children = contactListDivInner.querySelectorAll('.contact-item, button');
-                    children.forEach(el => el.remove());
-                    const headerTitle = document.createElement('h3');
-                    headerTitle.innerText = "Selecione um contato";
-                    contactListDivInner.appendChild(headerTitle);
-                }
+                chatArea.innerHTML = '<p style="text-align: center; color: #777; margin-top: 20px;">Faça login para conversar</p>';
                 mainScreen.classList.add('hidden');
                 chatContainer.classList.add('hidden');
+                notificationBadge.style.display = 'none';
+                if (!isLoginMode) window.toggleAuthMode();
             }
         });
         
-        // Evento Enter
-        document.getElementById('message-input').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') window.sendMessage();
-        });
-        
-        // Configuração inicial
         document.getElementById('auth-submit-btn').onclick = () => window.submitAuth();
         document.getElementById('auth-toggle-btn').onclick = () => window.toggleAuthMode();
         window.toggleAuthMode();
         authScreen.style.display = 'flex';
         
-        console.log("Firebase com conectividade real entre usuários ativo e persistência LOCAL configurada!");
+        // Expor funções para o escopo global
+        window.filterContacts = filterContacts;
+        window.addFriendFromMain = () => window.sendFriendRequest();
+        
+        console.log("Chat com sistema de solicitações de amizade ativo!");
     </script>
 </head>
 <body>
@@ -1214,22 +1063,33 @@
         <span id="chat-title">Chat</span>
     </div>
     <div style="display: flex; gap: 10px; align-items: center;">
+        <div class="notification-container">
+            <div class="notification-btn" id="notification-btn" onclick="toggleNotificationPanel()">
+                🔔
+                <div class="notification-badge" id="notification-badge" style="display: none;">0</div>
+            </div>
+            <div class="notification-panel" id="notification-panel">
+                <div class="notification-header">Solicitações de Amizade</div>
+                <div class="notification-list" id="notification-list">
+                    <div class="no-requests">Nenhuma solicitação pendente</div>
+                </div>
+            </div>
+        </div>
         <div class="back-btn" onclick="goToMainScreen()">⬅️</div>
         <div class="settings-container">
             <div class="settings-btn" onclick="toggleSettingsMenu()">⚙️</div>
             <div id="settings-menu" class="settings-menu">
-                <!-- O item "Logado como:" será inserido dinamicamente via JS -->
-                <div class="settings-menu-item" onclick="toggleContacts()">
-                    ➕ Adicionar Contato
+                <div class="settings-menu-item" onclick="sendFriendRequest()">
+                    ➕ Adicionar Amigo
                 </div>
-                <div class="settings-menu-item" onclick="clearMessages()">
+                <div class="settings-menu-item" onclick="window.clearMessages?.()">
                     🗑️ Limpar Mensagens
                 </div>
-                <div class="settings-menu-item" onclick="deleteConversation()">
+                <div class="settings-menu-item" onclick="window.deleteConversation?.()">
                     ❌ Excluir Conversa
                 </div>
-                <div class="settings-menu-item" onclick="deleteContact()">
-                    👤 Deletar Contato
+                <div class="settings-menu-item" onclick="window.deleteContact?.()">
+                    👤 Remover Amigo
                 </div>
                 <div class="settings-menu-item danger" onclick="logout()">
                     🚪 Sair
@@ -1243,12 +1103,10 @@
     <h3>Selecione um contato</h3>
 </div>
 
-<!-- Tela Principal com lista de contatos -->
 <div id="main-screen" class="main-screen hidden">
-    <h2>💬 Seus Contatos</h2>
-    <!-- Barra de busca adicionada no canto superior esquerdo -->
+    <h2>💬 Seus Amigos</h2>
     <div class="search-container">
-        <input type="text" id="search-input" class="search-input" placeholder="🔍 Buscar contato por nome ou e-mail..." onkeyup="filterContacts(this.value)">
+        <input type="text" id="search-input" class="search-input" placeholder="🔍 Buscar amigo por nome ou e-mail..." onkeyup="filterContacts(this.value)">
         <span class="search-icon">🔍</span>
         <span class="clear-search" onclick="clearSearch()">✖</span>
     </div>
@@ -1258,7 +1116,6 @@
     </button>
 </div>
 
-<!-- Container do Chat -->
 <div id="chat-container" class="hidden">
     <div id="chat-area">
         <p id="placeholder" style="text-align: center; color: #777; margin-top: 20px;">Selecione um contato para começar</p>
@@ -1269,7 +1126,6 @@
     </div>
 </div>
 
-<!-- Tela de Autenticação -->
 <div id="auth-screen">
     <div class="auth-container">
         <h2 id="auth-title">Login</h2>
@@ -1280,7 +1136,7 @@
         <div id="auth-success" class="success-msg"></div>
         <button id="auth-submit-btn">Entrar</button>
         <button id="auth-toggle-btn" class="toggle-btn">Criar nova conta</button>
-        <p>🔒 Chat seguro com Firebase - Converse com seus amigos em tempo real!</p>
+        <p>🔒 Chat seguro - Envie solicitações de amizade para conversar!</p>
     </div>
 </div>
 
