@@ -26,6 +26,10 @@
         .settings-menu-item:hover { background: #f0f2f5; }
         .settings-menu-item.danger { color: #d32f2f; }
         .settings-menu-item.danger:hover { background: #ffebee; }
+        /* Estilo para o item de usuário logado (não clicável/informativo) */
+        .settings-menu-item.logged-user { color: #075e54; font-weight: 500; background: #e8f5e9; cursor: default; }
+        .settings-menu-item.logged-user:hover { background: #e8f5e9; }
+        .logged-email { font-size: 12px; color: #555; font-weight: normal; margin-left: 5px; word-break: break-all; }
 
         /* Lista de Contatos (Modal) */
         #contact-list { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 100; padding: 20px; overflow-y: auto; }
@@ -292,7 +296,7 @@
         // Import Firebase SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
         import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc, updateDoc, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
         
         // Firebase configuration
         const firebaseConfig = {
@@ -308,6 +312,11 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
+        
+        // Configurar persistência LOCAL (manter logado mesmo fechando o navegador)
+        setPersistence(auth, browserLocalPersistence).catch((error) => {
+            console.error("Erro ao configurar persistência:", error);
+        });
         
         // Variáveis globais
         let currentContact = null;          // email do contato atual (ex: amigo@exemplo.com)
@@ -343,6 +352,29 @@
         const authTitle = document.getElementById('auth-title');
         
         let isLoginMode = true;
+        
+        // Função para atualizar o menu de configurações com o e-mail logado
+        function updateSettingsMenuWithUser() {
+            const settingsMenu = document.getElementById('settings-menu');
+            // Remove o item de usuário logado se existir para evitar duplicatas
+            const existingUserItem = document.getElementById('logged-user-menu-item');
+            if (existingUserItem) existingUserItem.remove();
+            
+            if (currentUserEmail) {
+                const userItem = document.createElement('div');
+                userItem.id = 'logged-user-menu-item';
+                userItem.className = 'settings-menu-item logged-user';
+                // Mostrar e-mail de forma amigável (primeira parte antes do @)
+                const displayEmail = currentUserEmail.split('@')[0];
+                userItem.innerHTML = `
+                    👤 <span>Logado como: <strong>${displayEmail}</strong></span>
+                    <span class="logged-email">(${currentUserEmail})</span>
+                `;
+                // Inserir como primeiro item do menu
+                const firstItem = settingsMenu.firstChild;
+                settingsMenu.insertBefore(userItem, firstItem);
+            }
+        }
         
         // Função para verificar e parar de piscar um contato específico
         function stopBlinking(contactEmail) {
@@ -701,6 +733,10 @@
                 mainScreen.classList.add('hidden');
                 // Garantir que a tela de autenticação seja mostrada novamente
                 authScreen.style.display = 'flex';
+                // Limpar campos de login
+                authEmail.value = '';
+                authPassword.value = '';
+                authConfirmPassword.value = '';
             } catch (error) {
                 console.error('Erro ao sair:', error);
             }
@@ -779,7 +815,7 @@
             document.getElementById('settings-menu').classList.remove('show');
         };
         
-        // Função para Deletar Usuário
+        // Função para Deletar Usuário (remover contato da agenda)
         window.deleteContact = async function() {
             if (!currentUserEmail || !currentContact) {
                 alert("Nenhum contato selecionado.");
@@ -1116,6 +1152,9 @@
                     userSpan.innerText = user.email.split('@')[0];
                 }
                 
+                // Atualizar menu com usuário logado
+                updateSettingsMenuWithUser();
+                
                 // Mostrar tela principal
                 mainScreen.classList.remove('hidden');
                 chatContainer.classList.add('hidden');
@@ -1165,7 +1204,7 @@
         window.toggleAuthMode();
         authScreen.style.display = 'flex';
         
-        console.log("Firebase com conectividade real entre usuários ativo!");
+        console.log("Firebase com conectividade real entre usuários ativo e persistência LOCAL configurada!");
     </script>
 </head>
 <body>
@@ -1179,6 +1218,7 @@
         <div class="settings-container">
             <div class="settings-btn" onclick="toggleSettingsMenu()">⚙️</div>
             <div id="settings-menu" class="settings-menu">
+                <!-- O item "Logado como:" será inserido dinamicamente via JS -->
                 <div class="settings-menu-item" onclick="toggleContacts()">
                     ➕ Adicionar Contato
                 </div>
