@@ -26,6 +26,7 @@
         .settings-menu-item:hover { background: #f0f2f5; }
         .settings-menu-item.danger { color: #d32f2f; }
         .settings-menu-item.danger:hover { background: #ffebee; }
+        .settings-menu-item input[type="file"] { display: none; }
 
         /* Botão de notificação de solicitações */
         .notification-container { position: relative; display: inline-block; margin-right: 10px; }
@@ -47,7 +48,6 @@
         .reject-btn { background: #f44336; color: white; }
         .reject-btn:hover { background: #d32f2f; }
         .no-requests { padding: 20px; text-align: center; color: #999; font-size: 13px; }
-
         /* Lista de Contatos (Modal) */
         #contact-list { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 100; padding: 20px; overflow-y: auto; }
         .contact-item { padding: 15px; border-bottom: 1px solid #ddd; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
@@ -96,8 +96,7 @@
         }
         .auth-container input {
             width: 100%;
-            padding: 12px 15px;
-            margin: 12px 0;
+            padding: 12px 15px;            margin: 12px 0;
             border: 1px solid #ddd;
             border-radius: 30px;
             font-size: 16px;
@@ -146,8 +145,7 @@
             display: none;
         }
         .auth-container p {
-            margin-top: 15px;
-            color: #666;
+            margin-top: 15px;            color: #666;
             font-size: 13px;
         }
         @media (max-width: 480px) {
@@ -196,8 +194,7 @@
             box-shadow: 0 0 0 3px rgba(7,94,84,0.1);
         }
         .search-icon {
-            position: absolute;
-            right: 15px;
+            position: absolute;            right: 15px;
             top: 50%;
             transform: translateY(-50%);
             color: #999;
@@ -246,8 +243,7 @@
         }
         .main-screen .contact-avatar {
             width: 40px;
-            height: 40px;
-            background: #075e54;
+            height: 40px;            background: #075e54;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -296,8 +292,7 @@
         }
         
         /* Animação de piscar */
-        @keyframes blink {
-            0% { background-color: transparent; }
+        @keyframes blink {            0% { background-color: transparent; }
             50% { background-color: #ffeb3b; }
             100% { background-color: transparent; }
         }
@@ -306,6 +301,26 @@
             border-radius: 12px;
             padding: 10px;
             margin: -10px;
+        }
+        
+        /* Toast de notificação */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 30px;
+            font-size: 14px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
         }
     </style>
     <!-- Firebase SDKs -->
@@ -326,8 +341,7 @@
         };
 
         // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        const app = initializeApp(firebaseConfig);        const db = getFirestore(app);
         const auth = getAuth(app);
         
         // Variáveis globais
@@ -340,6 +354,7 @@
         let friendsList = []; // Lista de amigos (emails)
         let pendingRequestsListener = null; // Listener para solicitações pendentes
         let friendsListener = null; // Listener para amigos aceitos
+        let notificationSound = null; // Áudio de notificação
         
         const friendlyNameMap = {};
         
@@ -369,6 +384,85 @@
         
         let isLoginMode = true;
         
+        // ========== FUNÇÕES DE SOM DE NOTIFICAÇÃO ==========
+        
+        // Carregar som salvo do localStorage
+        function loadNotificationSound() {
+            const savedSound = localStorage.getItem('notificationSound');
+            if (savedSound) {
+                notificationSound = new Audio(savedSound);                notificationSound.volume = 0.7;
+            }
+        }
+        
+        // Tocar som de notificação
+        function playNotificationSound() {
+            if (notificationSound) {
+                // Reinicia o áudio se já estiver tocando
+                notificationSound.currentTime = 0;
+                notificationSound.play().catch(e => {
+                    console.log('Autoplay bloqueado pelo navegador:', e);
+                    // Tenta novamente com um pequeno delay
+                    setTimeout(() => {
+                        notificationSound.currentTime = 0;
+                        notificationSound.play().catch(() => {});
+                    }, 100);
+                });
+            }
+        }
+        
+        // Selecionar arquivo de som
+        window.selectNotificationSound = function() {
+            const fileInput = document.getElementById('sound-file-input');
+            fileInput.click();
+        };
+        
+        // Processar arquivo de som selecionado
+        function handleSoundFile(file) {
+            if (!file) return;
+            
+            // Verificar tipo de arquivo
+            if (!file.type.startsWith('audio/')) {
+                showToast('Selecione um arquivo de áudio válido');
+                return;
+            }
+            
+            // Verificar tamanho (máx 3MB para localStorage)
+            if (file.size > 3 * 1024 * 1024) {
+                showToast('Arquivo muito grande. Máximo 3MB.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const audioData = e.target.result;
+                // Salvar no localStorage
+                localStorage.setItem('notificationSound', audioData);
+                // Atualizar objeto de áudio
+                notificationSound = new Audio(audioData);
+                notificationSound.volume = 0.7;                showToast('Som de notificação atualizado! 🔔');
+                // Testar o som
+                playNotificationSound();
+            };
+            reader.onerror = function() {
+                showToast('Erro ao carregar arquivo');
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // Mostrar toast de notificação
+        function showToast(message) {
+            let toast = document.getElementById('notification-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'notification-toast';
+                toast.className = 'toast';
+                document.body.appendChild(toast);
+            }
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+        
         // ========== FUNÇÕES DE AMIZADE E SOLICITAÇÕES ==========
         
         // Verificar se um usuário existe pelo email
@@ -394,8 +488,7 @@
                 return;
             }
             
-            // Verificar se já são amigos
-            const alreadyFriend = friendsList.includes(emailTrimmed);
+            // Verificar se já são amigos            const alreadyFriend = friendsList.includes(emailTrimmed);
             if (alreadyFriend) {
                 alert("Você já é amigo(a) desta pessoa!");
                 return;
@@ -444,8 +537,7 @@
                 alert(`Solicitação de amizade enviada para ${emailTrimmed}!`);
             } catch (error) {
                 console.error("Erro ao enviar solicitação:", error);
-                alert("Erro ao enviar solicitação.");
-            }
+                alert("Erro ao enviar solicitação.");            }
         };
         
         // Aceitar solicitação
@@ -494,8 +586,7 @@
             }
             
             const requestsRef = collection(db, "solicitacoes");
-            const q = query(requestsRef, 
-                where("destinatario", "==", currentUserEmail),
+            const q = query(requestsRef,                 where("destinatario", "==", currentUserEmail),
                 where("status", "==", "pendente")
             );
             
@@ -544,8 +635,7 @@
         }
         
         // Carregar lista de amigos aceitos (via amizades)
-        async function loadFriendsAndContacts() {
-            if (!currentUserEmail) return;
+        async function loadFriendsAndContacts() {            if (!currentUserEmail) return;
             
             const amigosSet = new Set();
             const amizadesRef = collection(db, "amizades");
@@ -594,8 +684,7 @@
             
             if (friendsList.length === 0) {
                 contactListMain.innerHTML = '<div class="no-results">😊 Você ainda não tem amigos. Envie solicitações de amizade!</div>';
-                return;
-            }
+                return;            }
             
             const contacts = friendsList.map(email => ({
                 email: email,
@@ -644,8 +733,7 @@
         }
         
         function filterContacts(searchTerm) {
-            if (!searchTerm.trim()) {
-                const contacts = friendsList.map(email => ({
+            if (!searchTerm.trim()) {                const contacts = friendsList.map(email => ({
                     email: email,
                     name: friendlyNameMap[email] || email.split('@')[0],
                     initial: (friendlyNameMap[email] || email.split('@')[0]).charAt(0).toUpperCase()
@@ -671,9 +759,9 @@
         function escapeHtml(str) {
             if (!str) return '';
             return str.replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
+                if (m === '&') return '&';
+                if (m === '<') return '<';
+                if (m === '>') return '>';
                 return m;
             });
         }
@@ -694,8 +782,7 @@
                 unreadListeners.get(contactEmail)();
                 unreadListeners.delete(contactEmail);
             }
-            
-            const conversationId = getConversationId(currentUserEmail, contactEmail);
+                        const conversationId = getConversationId(currentUserEmail, contactEmail);
             const messagesRef = collection(db, "conversas", conversationId, "mensagens");
             const q = query(messagesRef, orderBy("timestamp", "desc"));
             const lastReadRef = doc(db, "leituras", `${currentUserEmail}_${contactEmail}`);
@@ -729,6 +816,8 @@
                         if (contactElement) {
                             contactElement.classList.add('blinking');
                         }
+                        // 🔔 TOCAR SOM DE NOTIFICAÇÃO
+                        playNotificationSound();
                     }
                 } else {
                     stopBlinking(contactEmail);
@@ -742,8 +831,7 @@
             if (!currentUserEmail || !contactEmail) return;
             const lastReadRef = doc(db, "leituras", `${currentUserEmail}_${contactEmail}`);
             await setDoc(lastReadRef, {
-                lastRead: serverTimestamp(),
-                updatedAt: serverTimestamp()
+                lastRead: serverTimestamp(),                updatedAt: serverTimestamp()
             });
             stopBlinking(contactEmail);
         }
@@ -792,8 +880,7 @@
                 unsubscribe();
                 unsubscribe = null;
             }
-            if (!currentUserEmail || !contactEmail) return;
-            
+            if (!currentUserEmail || !contactEmail) return;            
             const conversationId = getConversationId(currentUserEmail, contactEmail);
             const messagesRef = collection(db, "conversas", conversationId, "mensagens");
             const q = query(messagesRef, orderBy("timestamp", "asc"));
@@ -842,8 +929,7 @@
                 chatArea.scrollTop = chatArea.scrollHeight;
             }, (error) => {
                 console.error("Erro no listener:", error);
-                chatArea.innerHTML = '<p style="text-align:center;color:red;">Erro ao carregar mensagens.</p>';
-            });
+                chatArea.innerHTML = '<p style="text-align:center;color:red;">Erro ao carregar mensagens.</p>';            });
         }
         
         window.sendMessage = async function() {
@@ -892,8 +978,7 @@
         
         window.toggleSettingsMenu = function() {
             const menu = document.getElementById('settings-menu');
-            menu.classList.toggle('show');
-        };
+            menu.classList.toggle('show');        };
         
         window.logout = async function() {
             try {
@@ -942,8 +1027,7 @@
                 authConfirmPassword.style.display = 'none';
                 authConfirmPassword.required = false;
             } else {
-                authTitle.textContent = 'Cadastro';
-                authSubmitBtn.textContent = 'Cadastrar';
+                authTitle.textContent = 'Cadastro';                authSubmitBtn.textContent = 'Cadastrar';
                 authToggleBtn.textContent = 'Já tenho uma conta';
                 authConfirmPassword.style.display = 'block';
                 authConfirmPassword.required = true;
@@ -992,8 +1076,7 @@
             const menu = document.getElementById('settings-menu');
             const settingsBtn = document.querySelector('.settings-btn');
             if (menu && menu.classList.contains('show') && !menu.contains(e.target) && e.target !== settingsBtn && !settingsBtn.contains(e.target)) {
-                menu.classList.remove('show');
-            }
+                menu.classList.remove('show');            }
             const panel = document.getElementById('notification-panel');
             const notifBtn = document.getElementById('notification-btn');
             if (panel && panel.classList.contains('show') && !panel.contains(e.target) && e.target !== notifBtn && !notifBtn.contains(e.target)) {
@@ -1020,6 +1103,9 @@
                 mainScreen.classList.remove('hidden');
                 chatContainer.classList.add('hidden');
                 
+                // Carregar som de notificação salvo
+                loadNotificationSound();
+                
                 // Carregar amigos e solicitações
                 await loadFriendsAndContacts();
                 loadPendingRequests();
@@ -1039,8 +1125,7 @@
                 chatArea.innerHTML = '<p style="text-align: center; color: #777; margin-top: 20px;">Faça login para conversar</p>';
                 mainScreen.classList.add('hidden');
                 chatContainer.classList.add('hidden');
-                notificationBadge.style.display = 'none';
-                if (!isLoginMode) window.toggleAuthMode();
+                notificationBadge.style.display = 'none';                if (!isLoginMode) window.toggleAuthMode();
             }
         });
         
@@ -1053,7 +1138,14 @@
         window.filterContacts = filterContacts;
         window.addFriendFromMain = () => window.sendFriendRequest();
         
-        console.log("Chat com sistema de solicitações de amizade ativo!");
+        // Listener para seleção de arquivo de som
+        document.getElementById('sound-file-input')?.addEventListener('change', function(e) {
+            handleSoundFile(e.target.files[0]);
+            // Resetar input para permitir selecionar o mesmo arquivo novamente
+            e.target.value = '';
+        });
+        
+        console.log("Chat com sistema de solicitações de amizade e som de notificação ativo! 🔔");
     </script>
 </head>
 <body>
@@ -1082,15 +1174,14 @@
                 <div class="settings-menu-item" onclick="sendFriendRequest()">
                     ➕ Adicionar Amigo
                 </div>
-                <div class="settings-menu-item" onclick="window.clearMessages?.()">
-                    🗑️ Limpar Mensagens
+                <div class="settings-menu-item" onclick="window.clearMessages?.()">                    🗑️ Limpar Mensagens
                 </div>
-                <div class="settings-menu-item" onclick="window.deleteConversation?.()">
-                    ❌ Excluir Conversa
+                <!-- NOVO: Botão para selecionar som de notificação -->
+                <div class="settings-menu-item" onclick="selectNotificationSound()">
+                    🔔 Som de Notificação
+                    <input type="file" id="sound-file-input" accept="audio/*">
                 </div>
-                <div class="settings-menu-item" onclick="window.deleteContact?.()">
-                    👤 Remover Amigo
-                </div>
+                <!-- BOTÕES REMOVIDOS: Excluir Conversa e Remover Amigo -->
                 <div class="settings-menu-item danger" onclick="logout()">
                     🚪 Sair
                 </div>
@@ -1132,8 +1223,7 @@
         <input type="email" id="auth-email" placeholder="E-mail" autocomplete="email">
         <input type="password" id="auth-password" placeholder="Senha" autocomplete="current-password">
         <input type="password" id="auth-confirm-password" placeholder="Confirmar senha" style="display: none;">
-        <div id="auth-error" class="error-msg"></div>
-        <div id="auth-success" class="success-msg"></div>
+        <div id="auth-error" class="error-msg"></div>        <div id="auth-success" class="success-msg"></div>
         <button id="auth-submit-btn">Entrar</button>
         <button id="auth-toggle-btn" class="toggle-btn">Criar nova conta</button>
         <p>🔒 Chat seguro - Envie solicitações de amizade para conversar!</p>
