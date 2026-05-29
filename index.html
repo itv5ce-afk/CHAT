@@ -3,6 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="theme-color" content="#075e54">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Chat Moderno">
+    <link rel="manifest" href="data:application/manifest+json,{
+        %22name%22:%22Chat%20Moderno%22,
+        %22short_name%22:%22Chat%22,
+        %22start_url%22:%22.%22,
+        %22display%22:%22standalone%22,
+        %22background_color%22:%22%23f0f2f5%22,
+        %22theme_color%22:%22%23075e54%22,
+        %22icons%22:[{
+            %22src%22:%22data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%23075e54'/%3E%3Ctext x='50' y='65' font-size='50' text-anchor='middle' fill='white'%3E💬%3C/text%3E%3C/svg%3E%22,
+            %22sizes%22:%22192x192%22,
+            %22type%22:%22image/svg+xml%22
+        }]
+    }">
     <title>Chat Moderno - Conexão entre Amigos</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
@@ -30,8 +47,7 @@
 
         /* Botão de notificação de solicitações */
         .notification-container { position: relative; display: inline-block; margin-right: 10px; }
-        .notification-btn { cursor: pointer; font-size: 20px; background: rgba(255,255,255,0.2); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: 0.2s; position: relative; }
-        .notification-btn:hover { background: rgba(255,255,255,0.3); }
+        .notification-btn { cursor: pointer; font-size: 20px; background: rgba(255,255,255,0.2); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: 0.2s; position: relative; }        .notification-btn:hover { background: rgba(255,255,255,0.3); }
         .notification-badge { position: absolute; top: -5px; right: -5px; background: #f44336; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
         .notification-panel { display: none; position: absolute; right: 0; top: 45px; background: white; min-width: 280px; max-width: 320px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 150; overflow: hidden; }
         .notification-panel.show { display: block; }
@@ -48,6 +64,7 @@
         .reject-btn { background: #f44336; color: white; }
         .reject-btn:hover { background: #d32f2f; }
         .no-requests { padding: 20px; text-align: center; color: #999; font-size: 13px; }
+
         /* Lista de Contatos (Modal) */
         #contact-list { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 100; padding: 20px; overflow-y: auto; }
         .contact-item { padding: 15px; border-bottom: 1px solid #ddd; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
@@ -79,8 +96,7 @@
             justify-content: center;
             align-items: center;
             transition: all 0.3s ease;
-        }
-        .auth-container {
+        }        .auth-container {
             background: white;
             border-radius: 28px;
             padding: 30px 25px;
@@ -96,7 +112,8 @@
         }
         .auth-container input {
             width: 100%;
-            padding: 12px 15px;            margin: 12px 0;
+            padding: 12px 15px;
+            margin: 12px 0;
             border: 1px solid #ddd;
             border-radius: 30px;
             font-size: 16px;
@@ -128,8 +145,7 @@
             color: #075e54;
             border: 1px solid #075e54;
             margin-top: 5px;
-        }
-        .auth-container .toggle-btn:hover {
+        }        .auth-container .toggle-btn:hover {
             background: #e8f5e9;
         }
         .auth-container .error-msg {
@@ -145,7 +161,8 @@
             display: none;
         }
         .auth-container p {
-            margin-top: 15px;            color: #666;
+            margin-top: 15px;
+            color: #666;
             font-size: 13px;
         }
         @media (max-width: 480px) {
@@ -177,8 +194,7 @@
             width: 100%;
             max-width: 500px;
             margin-bottom: 20px;
-            position: relative;
-        }
+            position: relative;        }
         .search-input {
             width: 100%;
             padding: 12px 40px 12px 15px;
@@ -194,7 +210,8 @@
             box-shadow: 0 0 0 3px rgba(7,94,84,0.1);
         }
         .search-icon {
-            position: absolute;            right: 15px;
+            position: absolute;
+            right: 15px;
             top: 50%;
             transform: translateY(-50%);
             color: #999;
@@ -226,8 +243,7 @@
             border-radius: 20px;
             overflow: hidden;
             overflow-y: auto;
-            max-height: 60vh;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-height: 60vh;            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         .main-screen .contact-item-main {
             padding: 15px 20px;
@@ -243,7 +259,8 @@
         }
         .main-screen .contact-avatar {
             width: 40px;
-            height: 40px;            background: #075e54;
+            height: 40px;
+            background: #075e54;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -275,8 +292,7 @@
             background: #075e54;
             color: white;
             border: none;
-            border-radius: 30px;
-            font-size: 16px;
+            border-radius: 30px;            font-size: 16px;
             cursor: pointer;
             transition: 0.2s;
             display: flex;
@@ -292,7 +308,8 @@
         }
         
         /* Animação de piscar */
-        @keyframes blink {            0% { background-color: transparent; }
+        @keyframes blink {
+            0% { background-color: transparent; }
             50% { background-color: #ffeb3b; }
             100% { background-color: transparent; }
         }
@@ -318,17 +335,125 @@
             opacity: 0;
             transition: opacity 0.3s;
             pointer-events: none;
+            max-width: 90%;
+            text-align: center;
         }
         .toast.show {
             opacity: 1;
         }
+                /* Badge de permissão de notificação */
+        .permission-badge {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #075e54;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 13px;
+            z-index: 999;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            cursor: pointer;
+            animation: pulse 2s infinite;
+        }
+        .permission-badge.show {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.05); }
+        }
+        
+        /* Indicador de notificações ativadas */
+        .notification-status {
+            font-size: 11px;
+            color: #25d366;
+            margin-left: 5px;
+        }
     </style>
+    
+    <!-- Service Worker para PWA e Notificações -->
+    <script>
+        // Registrar Service Worker para notificações em background
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // Service Worker inline via Blob para funcionar sem arquivo externo
+                const swCode = `
+                    self.addEventListener('install', (event) => {
+                        self.skipWaiting();
+                    });
+                    
+                    self.addEventListener('activate', (event) => {
+                        self.clients.claim();
+                    });
+                                        // Manipular clique na notificação
+                    self.addEventListener('notificationclick', (event) => {
+                        event.notification.close();
+                        event.waitUntil(
+                            clients.matchAll({ type: 'window', includeUncontrolled: true })
+                                .then((clientList) => {
+                                    // Se já existe uma janela do chat, focar nela
+                                    for (const client of clientList) {
+                                        if (client.url.includes(location.pathname) && 'focus' in client) {
+                                            return client.focus();
+                                        }
+                                    }
+                                    // Se não, abrir nova janela
+                                    if (clients.openWindow) {
+                                        return clients.openWindow('/');
+                                    }
+                                })
+                        );
+                    });
+                    
+                    // Manipular mensagens do push (para FCM futuro)
+                    self.addEventListener('push', (event) => {
+                        const data = event.data?.json() || {};
+                        const title = data.title || '💬 Nova Mensagem';
+                        const options = {
+                            body: data.body || 'Você recebeu uma nova mensagem no Chat Moderno',
+                            icon: data.icon || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%23075e54"/><text x="50" y="65" font-size="50" text-anchor="middle" fill="white">💬</text></svg>',
+                            badge: data.badge,
+                            tag: 'chat-message',
+                            renotify: true,
+                            requireInteraction: true,
+                            actions: [
+                                { action: 'open', title: 'Abrir Chat' },
+                                { action: 'close', title: 'Fechar' }
+                            ]
+                        };
+                        event.waitUntil(
+                            self.registration.showNotification(title, options)
+                        );
+                    });
+                `;
+                
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                
+                navigator.serviceWorker.register(swUrl)
+                    .then(registration => {
+                        console.log('✅ Service Worker registrado:', registration.scope);
+                        // Salvar referência para notificações
+                        window.swRegistration = registration;                    })
+                    .catch(error => {
+                        console.log('❌ Falha no registro do Service Worker:', error);
+                    });
+            });
+        }
+    </script>
+    
     <!-- Firebase SDKs -->
     <script type="module">
         // Import Firebase SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
         import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc, updateDoc, where, getDocs, deleteDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+        import { getMessaging, getToken, onMessage, isSupported } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging.js";
         
         // Firebase configuration
         const firebaseConfig = {
@@ -341,8 +466,10 @@
         };
 
         // Initialize Firebase
-        const app = initializeApp(firebaseConfig);        const db = getFirestore(app);
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
         const auth = getAuth(app);
+        let messaging = null;
         
         // Variáveis globais
         let currentContact = null;
@@ -355,13 +482,13 @@
         let pendingRequestsListener = null; // Listener para solicitações pendentes
         let friendsListener = null; // Listener para amigos aceitos
         let notificationSound = null; // Áudio de notificação
+        let notificationPermissionRequested = false; // Controle de solicitação de permissão
         
         const friendlyNameMap = {};
         
         // Referências DOM
         const chatArea = document.getElementById('chat-area');
-        const chatTitle = document.getElementById('chat-title');
-        const messageInput = document.getElementById('message-input');
+        const chatTitle = document.getElementById('chat-title');        const messageInput = document.getElementById('message-input');
         const sendBtn = document.getElementById('send-btn');
         const contactListDiv = document.getElementById('contact-list');
         const authScreen = document.getElementById('auth-screen');
@@ -384,30 +511,134 @@
         
         let isLoginMode = true;
         
-        // ========== FUNÇÕES DE SOM DE NOTIFICAÇÃO ==========
+        // ========== FUNÇÕES DE NOTIFICAÇÃO PUSH E SOM ==========
+        
+        // Solicitar permissão para notificações do navegador
+        async function requestNotificationPermission() {
+            if (!('Notification' in window)) {
+                console.log('Este navegador não suporta notificações desktop');
+                return false;
+            }
+            
+            if (Notification.permission === 'granted') {
+                return true;
+            }
+            
+            if (Notification.permission !== 'denied') {
+                try {
+                    const permission = await Notification.requestPermission();
+                    return permission === 'granted';
+                } catch (error) {
+                    console.log('Erro ao solicitar permissão:', error);
+                    return false;
+                }
+            }
+            return false;
+        }
+        
+        // Mostrar badge para solicitar permissão de notificação
+        function showPermissionBadge() {            if (notificationPermissionRequested) return;
+            if (!('Notification' in window) || Notification.permission === 'granted') return;
+            
+            let badge = document.getElementById('notification-permission-badge');
+            if (!badge) {
+                badge = document.createElement('div');
+                badge.id = 'notification-permission-badge';
+                badge.className = 'permission-badge';
+                badge.innerHTML = '🔔 Ativar notificações';
+                badge.onclick = async () => {
+                    const granted = await requestNotificationPermission();
+                    badge.classList.remove('show');
+                    notificationPermissionRequested = true;
+                    if (granted) {
+                        showToast('✅ Notificações ativadas!');
+                        setupForegroundNotifications();
+                    }
+                };
+                document.body.appendChild(badge);
+            }
+            setTimeout(() => badge.classList.add('show'), 3000);
+        }
+        
+        // Configurar notificações em primeiro plano (quando app está aberto mas em background)
+        function setupForegroundNotifications() {
+            if (!('Notification' in window) || Notification.permission !== 'granted') return;
+            
+            // Detectar quando a página está em background
+            document.addEventListener('visibilitychange', () => {
+                window.isPageVisible = !document.hidden;
+            });
+            window.isPageVisible = !document.hidden;
+        }
+        
+        // Mostrar notificação do sistema
+        function showSystemNotification(title, body, contactName) {
+            if (!('Notification' in window) || Notification.permission !== 'granted') return;
+            
+            // Não mostrar se a página está visível e o contato está sendo visualizado
+            if (window.isPageVisible && currentContact === contactName) return;
+            
+            const icon = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%23075e54"/><text x="50" y="65" font-size="50" text-anchor="middle" fill="white">💬</text></svg>';
+            
+            const notification = new Notification(title, {
+                body: body,
+                icon: icon,
+                badge: icon,
+                tag: `chat-${contactName}-${Date.now()}`,
+                renotify: true,
+                requireInteraction: true            });
+            
+            // Clique na notificação
+            notification.onclick = function() {
+                window.focus();
+                if (currentContact !== contactName && friendsList.includes(contactName)) {
+                    startChatFromMain(contactName, friendlyNameMap[contactName] || contactName.split('@')[0]);
+                }
+                notification.close();
+            };
+            
+            // Auto-fechar após 5 segundos
+            setTimeout(() => notification.close(), 5000);
+        }
         
         // Carregar som salvo do localStorage
         function loadNotificationSound() {
             const savedSound = localStorage.getItem('notificationSound');
             if (savedSound) {
-                notificationSound = new Audio(savedSound);                notificationSound.volume = 0.7;
+                notificationSound = new Audio(savedSound);
+                notificationSound.volume = 0.7;
+            } else {
+                // Som padrão embutido (beep curto em base64)
+                const defaultSound = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+                notificationSound = new Audio(defaultSound);
+                notificationSound.volume = 0.5;
             }
         }
         
-        // Tocar som de notificação
+        // Tocar som de notificação com retry para autoplay
         function playNotificationSound() {
-            if (notificationSound) {
-                // Reinicia o áudio se já estiver tocando
+            if (!notificationSound) return;
+            
+            const playAudio = () => {
                 notificationSound.currentTime = 0;
-                notificationSound.play().catch(e => {
-                    console.log('Autoplay bloqueado pelo navegador:', e);
-                    // Tenta novamente com um pequeno delay
-                    setTimeout(() => {
-                        notificationSound.currentTime = 0;
-                        notificationSound.play().catch(() => {});
-                    }, 100);
-                });
-            }
+                notificationSound.play()
+                    .catch(e => {
+                        // Se falhar (autoplay bloqueado), tentar novamente após interação
+                        console.log('Autoplay bloqueado, aguardando interação:', e);
+                        // Adicionar listener para tentar após próximo clique/toque
+                        const unlock = () => {
+                            notificationSound.play().catch(() => {});
+                            ['click', 'touchstart', 'keydown'].forEach(evt => 
+                                document.removeEventListener(evt, unlock)
+                            );
+                        };
+                        ['click', 'touchstart', 'keydown'].forEach(evt => 
+                            document.addEventListener(evt, unlock, { once: true })
+                        );
+                    });            };
+            
+            // Tentar tocar imediatamente
+            playAudio();
         }
         
         // Selecionar arquivo de som
@@ -439,7 +670,8 @@
                 localStorage.setItem('notificationSound', audioData);
                 // Atualizar objeto de áudio
                 notificationSound = new Audio(audioData);
-                notificationSound.volume = 0.7;                showToast('Som de notificação atualizado! 🔔');
+                notificationSound.volume = 0.7;
+                showToast('Som de notificação atualizado! 🔔');
                 // Testar o som
                 playNotificationSound();
             };
@@ -452,8 +684,7 @@
         // Mostrar toast de notificação
         function showToast(message) {
             let toast = document.getElementById('notification-toast');
-            if (!toast) {
-                toast = document.createElement('div');
+            if (!toast) {                toast = document.createElement('div');
                 toast.id = 'notification-toast';
                 toast.className = 'toast';
                 document.body.appendChild(toast);
@@ -488,7 +719,8 @@
                 return;
             }
             
-            // Verificar se já são amigos            const alreadyFriend = friendsList.includes(emailTrimmed);
+            // Verificar se já são amigos
+            const alreadyFriend = friendsList.includes(emailTrimmed);
             if (alreadyFriend) {
                 alert("Você já é amigo(a) desta pessoa!");
                 return;
@@ -501,8 +733,7 @@
                 where("destinatario", "==", emailTrimmed),
                 where("status", "==", "pendente")
             );
-            const existingSnap = await getDocs(existingQuery);
-            if (!existingSnap.empty) {
+            const existingSnap = await getDocs(existingQuery);            if (!existingSnap.empty) {
                 alert("Você já enviou uma solicitação para este e-mail aguardando resposta.");
                 return;
             }
@@ -537,7 +768,8 @@
                 alert(`Solicitação de amizade enviada para ${emailTrimmed}!`);
             } catch (error) {
                 console.error("Erro ao enviar solicitação:", error);
-                alert("Erro ao enviar solicitação.");            }
+                alert("Erro ao enviar solicitação.");
+            }
         };
         
         // Aceitar solicitação
@@ -547,17 +779,14 @@
                 await updateDoc(requestRef, { status: "aceito" });
                 
                 // Adicionar nas listas de amigos (usando subcoleção ou documento de amizade)
-                // Vamos criar um documento de amizade para referência
                 const friendshipId = [currentUserEmail, remetenteEmail].sort().join('_');
                 const friendshipRef = doc(db, "amizades", friendshipId);
                 await setDoc(friendshipRef, {
-                    usuarios: [currentUserEmail, remetenteEmail],
-                    criadoEm: serverTimestamp(),
+                    usuarios: [currentUserEmail, remetenteEmail],                    criadoEm: serverTimestamp(),
                     status: "ativa"
                 });
                 
                 alert(`Você agora é amigo(a) de ${remetenteNome || remetenteEmail.split('@')[0]}!`);
-                // Recarregar lista de amigos
                 loadFriendsAndContacts();
             } catch (error) {
                 console.error("Erro ao aceitar solicitação:", error);
@@ -577,7 +806,7 @@
             }
         };
         
-        // Carregar solicitações pendentes (para o usuário logado como destinatário)
+        // Carregar solicitações pendentes
         function loadPendingRequests() {
             if (!currentUserEmail) return;
             
@@ -586,7 +815,8 @@
             }
             
             const requestsRef = collection(db, "solicitacoes");
-            const q = query(requestsRef,                 where("destinatario", "==", currentUserEmail),
+            const q = query(requestsRef, 
+                where("destinatario", "==", currentUserEmail),
                 where("status", "==", "pendente")
             );
             
@@ -596,16 +826,13 @@
                     requests.push({ id: doc.id, ...doc.data() });
                 });
                 
-                // Atualizar badge e painel
                 const count = requests.length;
                 if (count > 0) {
                     notificationBadge.style.display = 'flex';
                     notificationBadge.textContent = count > 9 ? '9+' : count;
                 } else {
-                    notificationBadge.style.display = 'none';
-                }
+                    notificationBadge.style.display = 'none';                }
                 
-                // Renderizar lista de solicitações
                 if (notificationList) {
                     if (requests.length === 0) {
                         notificationList.innerHTML = '<div class="no-requests">Nenhuma solicitação pendente</div>';
@@ -634,8 +861,9 @@
             });
         }
         
-        // Carregar lista de amigos aceitos (via amizades)
-        async function loadFriendsAndContacts() {            if (!currentUserEmail) return;
+        // Carregar lista de amigos aceitos
+        async function loadFriendsAndContacts() {
+            if (!currentUserEmail) return;
             
             const amigosSet = new Set();
             const amizadesRef = collection(db, "amizades");
@@ -652,9 +880,7 @@
                 });
                 
                 friendsList = Array.from(amigosSet);
-                
-                // Buscar nomes amigáveis para cada amigo
-                for (const email of friendsList) {
+                                for (const email of friendsList) {
                     if (!friendlyNameMap[email]) {
                         const userDoc = await getDoc(doc(db, "usuarios", email.replace(/\./g, '_')));
                         if (userDoc.exists()) {
@@ -665,12 +891,10 @@
                     }
                 }
                 
-                // Iniciar listeners de mensagens não lidas para cada amigo
                 for (const email of friendsList) {
                     startUnreadListener(email, friendlyNameMap[email]);
                 }
                 
-                // Atualizar tela principal com a lista de amigos
                 renderFriendsList();
             } catch (error) {
                 console.error("Erro ao carregar amigos:", error);
@@ -684,7 +908,8 @@
             
             if (friendsList.length === 0) {
                 contactListMain.innerHTML = '<div class="no-results">😊 Você ainda não tem amigos. Envie solicitações de amizade!</div>';
-                return;            }
+                return;
+            }
             
             const contacts = friendsList.map(email => ({
                 email: email,
@@ -704,8 +929,7 @@
                 noResults.className = 'no-results';
                 noResults.innerHTML = '🔍 Nenhum amigo encontrado';
                 contactListMain.appendChild(noResults);
-                return;
-            }
+                return;            }
             
             contacts.forEach(contact => {
                 const contactDiv = document.createElement('div');
@@ -733,7 +957,8 @@
         }
         
         function filterContacts(searchTerm) {
-            if (!searchTerm.trim()) {                const contacts = friendsList.map(email => ({
+            if (!searchTerm.trim()) {
+                const contacts = friendsList.map(email => ({
                     email: email,
                     name: friendlyNameMap[email] || email.split('@')[0],
                     initial: (friendlyNameMap[email] || email.split('@')[0]).charAt(0).toUpperCase()
@@ -753,9 +978,7 @@
                 initial: (friendlyNameMap[email] || email.split('@')[0]).charAt(0).toUpperCase()
             }));
             renderContactsList(filtered);
-        }
-        
-        // Função auxiliar para escapar HTML
+        }        
         function escapeHtml(str) {
             if (!str) return '';
             return str.replace(/[&<>]/g, function(m) {
@@ -782,7 +1005,8 @@
                 unreadListeners.get(contactEmail)();
                 unreadListeners.delete(contactEmail);
             }
-                        const conversationId = getConversationId(currentUserEmail, contactEmail);
+            
+            const conversationId = getConversationId(currentUserEmail, contactEmail);
             const messagesRef = collection(db, "conversas", conversationId, "mensagens");
             const q = query(messagesRef, orderBy("timestamp", "desc"));
             const lastReadRef = doc(db, "leituras", `${currentUserEmail}_${contactEmail}`);
@@ -803,8 +1027,7 @@
                 const lastReadDoc = await getDoc(lastReadRef);
                 let lastReadTimestamp = null;
                 if (lastReadDoc.exists()) {
-                    lastReadTimestamp = lastReadDoc.data().lastRead;
-                }
+                    lastReadTimestamp = lastReadDoc.data().lastRead;                }
                 
                 const needBlink = (!lastReadTimestamp || 
                     (lastMessageTimestamp && lastMessageTimestamp.toDate() > lastReadTimestamp.toDate()));
@@ -816,8 +1039,25 @@
                         if (contactElement) {
                             contactElement.classList.add('blinking');
                         }
+                        
                         // 🔔 TOCAR SOM DE NOTIFICAÇÃO
                         playNotificationSound();
+                        
+                        // 📱 MOSTRAR NOTIFICAÇÃO DO SISTEMA
+                        const senderName = friendlyNameMap[lastMessageSender] || lastMessageSender.split('@')[0];
+                        const messagePreview = lastMessageData.texto?.substring(0, 50) + (lastMessageData.texto?.length > 50 ? '...' : '');
+                        
+                        // Tentar notificação do sistema
+                        if ('Notification' in window && Notification.permission === 'granted') {
+                            showSystemNotification(
+                                `💬 Nova mensagem de ${senderName}`,
+                                messagePreview || 'Toque para ver',
+                                contactEmail
+                            );
+                        } else {
+                            // Fallback: toast visual
+                            showToast(`🔔 ${senderName}: ${messagePreview || 'Nova mensagem'}`);
+                        }
                     }
                 } else {
                     stopBlinking(contactEmail);
@@ -831,12 +1071,12 @@
             if (!currentUserEmail || !contactEmail) return;
             const lastReadRef = doc(db, "leituras", `${currentUserEmail}_${contactEmail}`);
             await setDoc(lastReadRef, {
-                lastRead: serverTimestamp(),                updatedAt: serverTimestamp()
+                lastRead: serverTimestamp(),
+                updatedAt: serverTimestamp()
             });
             stopBlinking(contactEmail);
         }
-        
-        window.goToMainScreen = function() {
+                window.goToMainScreen = function() {
             if (!currentUserEmail) return;
             if (unsubscribe) {
                 unsubscribe();
@@ -880,12 +1120,12 @@
                 unsubscribe();
                 unsubscribe = null;
             }
-            if (!currentUserEmail || !contactEmail) return;            
+            if (!currentUserEmail || !contactEmail) return;
+            
             const conversationId = getConversationId(currentUserEmail, contactEmail);
             const messagesRef = collection(db, "conversas", conversationId, "mensagens");
             const q = query(messagesRef, orderBy("timestamp", "asc"));
-            
-            chatArea.innerHTML = "";
+                        chatArea.innerHTML = "";
             unsubscribe = onSnapshot(q, (snapshot) => {
                 chatArea.innerHTML = "";
                 if (snapshot.empty) {
@@ -929,12 +1169,12 @@
                 chatArea.scrollTop = chatArea.scrollHeight;
             }, (error) => {
                 console.error("Erro no listener:", error);
-                chatArea.innerHTML = '<p style="text-align:center;color:red;">Erro ao carregar mensagens.</p>';            });
+                chatArea.innerHTML = '<p style="text-align:center;color:red;">Erro ao carregar mensagens.</p>';
+            });
         }
         
         window.sendMessage = async function() {
-            if (!currentUserEmail || !currentContact) {
-                alert("Selecione um contato para conversar!");
+            if (!currentUserEmail || !currentContact) {                alert("Selecione um contato para conversar!");
                 return;
             }
             const text = messageInput.value.trim();
@@ -978,12 +1218,12 @@
         
         window.toggleSettingsMenu = function() {
             const menu = document.getElementById('settings-menu');
-            menu.classList.toggle('show');        };
+            menu.classList.toggle('show');
+        };
         
         window.logout = async function() {
             try {
-                for (const [email, unsubscribeFn] of unreadListeners) {
-                    unsubscribeFn();
+                for (const [email, unsubscribeFn] of unreadListeners) {                    unsubscribeFn();
                 }
                 unreadListeners.clear();
                 blinkingContacts.clear();
@@ -1027,12 +1267,12 @@
                 authConfirmPassword.style.display = 'none';
                 authConfirmPassword.required = false;
             } else {
-                authTitle.textContent = 'Cadastro';                authSubmitBtn.textContent = 'Cadastrar';
+                authTitle.textContent = 'Cadastro';
+                authSubmitBtn.textContent = 'Cadastrar';
                 authToggleBtn.textContent = 'Já tenho uma conta';
                 authConfirmPassword.style.display = 'block';
                 authConfirmPassword.required = true;
-            }
-        };
+            }        };
         
         window.submitAuth = async function() {
             const email = authEmail.value.trim();
@@ -1072,11 +1312,55 @@
             }
         };
         
+        // Configurar Firebase Cloud Messaging para push notifications reais
+        async function setupFCM() {
+            try {
+                // Verificar se FCM é suportado
+                const supported = await isSupported();
+                if (!supported) {
+                    console.log('FCM não suportado neste navegador');
+                    return;
+                }
+                                messaging = getMessaging(app);
+                
+                // Solicitar permissão e obter token
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    const token = await getToken(messaging, {
+                        vapidKey: "YOUR_VAPID_KEY_HERE" // Substitua pela sua VAPID Key do Firebase
+                    });
+                    console.log('FCM Token:', token);
+                    // Salvar token no usuário para envio de push via Cloud Functions
+                    if (currentUserEmail) {
+                        await setDoc(doc(db, "usuarios", currentUserEmail.replace(/\./g, '_')), {
+                            fcmToken: token
+                        }, { merge: true });
+                    }
+                }
+                
+                // Listener para mensagens em primeiro plano
+                onMessage(messaging, (payload) => {
+                    console.log('Mensagem FCM recebida:', payload);
+                    const title = payload.notification?.title || '💬 Nova Mensagem';
+                    const body = payload.notification?.body || 'Você recebeu uma nova mensagem';
+                    const contactEmail = payload.data?.contactEmail;
+                    
+                    // Tocar som
+                    playNotificationSound();
+                    // Mostrar notificação
+                    showSystemNotification(title, body, contactEmail);
+                });
+            } catch (error) {
+                console.log('Erro ao configurar FCM:', error);
+            }
+        }
+        
         document.addEventListener('click', function(e) {
             const menu = document.getElementById('settings-menu');
             const settingsBtn = document.querySelector('.settings-btn');
             if (menu && menu.classList.contains('show') && !menu.contains(e.target) && e.target !== settingsBtn && !settingsBtn.contains(e.target)) {
-                menu.classList.remove('show');            }
+                menu.classList.remove('show');
+            }
             const panel = document.getElementById('notification-panel');
             const notifBtn = document.getElementById('notification-btn');
             if (panel && panel.classList.contains('show') && !panel.contains(e.target) && e.target !== notifBtn && !notifBtn.contains(e.target)) {
@@ -1086,8 +1370,7 @@
         
         document.getElementById('message-input')?.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') window.sendMessage();
-        });
-        
+        });        
         // Estado de autenticação
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -1105,6 +1388,13 @@
                 
                 // Carregar som de notificação salvo
                 loadNotificationSound();
+                
+                // Configurar notificações
+                setupForegroundNotifications();
+                showPermissionBadge();
+                
+                // Tentar configurar FCM para push notifications reais
+                setupFCM();
                 
                 // Carregar amigos e solicitações
                 await loadFriendsAndContacts();
@@ -1125,11 +1415,11 @@
                 chatArea.innerHTML = '<p style="text-align: center; color: #777; margin-top: 20px;">Faça login para conversar</p>';
                 mainScreen.classList.add('hidden');
                 chatContainer.classList.add('hidden');
-                notificationBadge.style.display = 'none';                if (!isLoginMode) window.toggleAuthMode();
+                notificationBadge.style.display = 'none';
+                if (!isLoginMode) window.toggleAuthMode();
             }
         });
-        
-        document.getElementById('auth-submit-btn').onclick = () => window.submitAuth();
+                document.getElementById('auth-submit-btn').onclick = () => window.submitAuth();
         document.getElementById('auth-toggle-btn').onclick = () => window.toggleAuthMode();
         window.toggleAuthMode();
         authScreen.style.display = 'flex';
@@ -1141,11 +1431,25 @@
         // Listener para seleção de arquivo de som
         document.getElementById('sound-file-input')?.addEventListener('change', function(e) {
             handleSoundFile(e.target.files[0]);
-            // Resetar input para permitir selecionar o mesmo arquivo novamente
             e.target.value = '';
         });
         
-        console.log("Chat com sistema de solicitações de amizade e som de notificação ativo! 🔔");
+        // Detectar quando o app é fechado/minimizado para manter notificações ativas
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                console.log('App em background - notificações do sistema ativas');
+            }
+        });
+        
+        // Antes do unload, garantir que service worker continue ativo
+        window.addEventListener('beforeunload', () => {
+            if (window.swRegistration) {
+                // Manter SW ativo por mais tempo
+                window.swRegistration.active?.postMessage({ type: 'KEEP_ALIVE' });
+            }
+        });
+        
+        console.log("✅ Chat Moderno carregado com notificações push e som em background! 🔔📱");
     </script>
 </head>
 <body>
@@ -1164,8 +1468,7 @@
                 <div class="notification-header">Solicitações de Amizade</div>
                 <div class="notification-list" id="notification-list">
                     <div class="no-requests">Nenhuma solicitação pendente</div>
-                </div>
-            </div>
+                </div>            </div>
         </div>
         <div class="back-btn" onclick="goToMainScreen()">⬅️</div>
         <div class="settings-container">
@@ -1174,14 +1477,13 @@
                 <div class="settings-menu-item" onclick="sendFriendRequest()">
                     ➕ Adicionar Amigo
                 </div>
-                <div class="settings-menu-item" onclick="window.clearMessages?.()">                    🗑️ Limpar Mensagens
+                <div class="settings-menu-item" onclick="window.clearMessages?.()">
+                    🗑️ Limpar Mensagens
                 </div>
-                <!-- NOVO: Botão para selecionar som de notificação -->
                 <div class="settings-menu-item" onclick="selectNotificationSound()">
                     🔔 Som de Notificação
                     <input type="file" id="sound-file-input" accept="audio/*">
                 </div>
-                <!-- BOTÕES REMOVIDOS: Excluir Conversa e Remover Amigo -->
                 <div class="settings-menu-item danger" onclick="logout()">
                     🚪 Sair
                 </div>
@@ -1216,14 +1518,14 @@
         <button id="send-btn" onclick="sendMessage()">Enviar</button>
     </div>
 </div>
-
 <div id="auth-screen">
     <div class="auth-container">
         <h2 id="auth-title">Login</h2>
         <input type="email" id="auth-email" placeholder="E-mail" autocomplete="email">
         <input type="password" id="auth-password" placeholder="Senha" autocomplete="current-password">
         <input type="password" id="auth-confirm-password" placeholder="Confirmar senha" style="display: none;">
-        <div id="auth-error" class="error-msg"></div>        <div id="auth-success" class="success-msg"></div>
+        <div id="auth-error" class="error-msg"></div>
+        <div id="auth-success" class="success-msg"></div>
         <button id="auth-submit-btn">Entrar</button>
         <button id="auth-toggle-btn" class="toggle-btn">Criar nova conta</button>
         <p>🔒 Chat seguro - Envie solicitações de amizade para conversar!</p>
