@@ -47,8 +47,7 @@
 
         .login-container h1 {
             color: #075e54;
-            text-align: center;
-            margin-bottom: 10px;
+            text-align: center;            margin-bottom: 10px;
             font-size: 32px;
         }
 
@@ -97,7 +96,6 @@
             color: #075e54;
             border: 2px solid #075e54;
         }
-
         .login-container .toggle-btn:hover {
             background: #e8f5e9;
         }
@@ -147,8 +145,7 @@
 
         .header h2 {
             font-size: 20px;
-            font-weight: 500;
-        }
+            font-weight: 500;        }
 
         .header-actions {
             display: flex;
@@ -197,8 +194,7 @@
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+            to { opacity: 1; transform: translateY(0); }        }
 
         .settings-menu-item {
             padding: 14px 18px;
@@ -247,7 +243,6 @@
             color: #25d366;
             font-weight: bold;
         }
-
         /* Tela Principal - Lista de Conversas */
         #main-screen {
             display: none;
@@ -294,6 +289,9 @@
             flex-shrink: 0;
         }
 
+        .conversation-avatar.group {
+            background: #5b61c3;
+        }
         .conversation-info {
             flex: 1;
             min-width: 0;
@@ -344,7 +342,6 @@
             margin-bottom: 10px;
             color: #666;
         }
-
         /* Animação de piscar na conversa */
         @keyframes blinkConversation {
             0%, 100% { background: white; }
@@ -393,7 +390,6 @@
         .back-button:hover {
             background: rgba(255,255,255,0.3);
         }
-
         .chat-contact-info {
             flex: 1;
         }
@@ -443,8 +439,7 @@
         .chat-menu {
             display: none;
             position: absolute;
-            right: 0;
-            top: 50px;
+            right: 0;            top: 50px;
             background: white;
             min-width: 220px;
             border-radius: 12px;
@@ -493,8 +488,7 @@
         .chat-menu-item .menu-icon {
             font-size: 18px;
             width: 24px;
-            text-align: center;
-        }
+            text-align: center;        }
 
         .chat-menu-item .menu-text {
             flex: 1;
@@ -536,8 +530,14 @@
             border-bottom-left-radius: 4px;
         }
 
-        .message-text {
-            margin-bottom: 5px;
+        .message-sender {
+            font-size: 12px;
+            font-weight: bold;
+            color: #5b61c3;
+            margin-bottom: 3px;
+        }
+
+        .message-text {            margin-bottom: 5px;
             font-size: 15px;
         }
 
@@ -586,8 +586,7 @@
             width: 50px;
             height: 50px;
             cursor: pointer;
-            font-size: 20px;
-            transition: background 0.3s;
+            font-size: 20px;            transition: background 0.3s;
         }
 
         .send-button:hover {
@@ -628,13 +627,15 @@
             border-radius: 15px;
             width: 90%;
             max-width: 400px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .modal-content h3 {
             margin-bottom: 20px;
             color: #075e54;
         }
-
         .modal-content input {
             width: 100%;
             padding: 12px;
@@ -670,9 +671,102 @@
             color: white;
         }
 
+        .btn-confirm:hover {
+            background: #054a3f;
+        }
+
         .btn-cancel {
             background: #e0e0e0;
             color: #666;
+        }
+
+        .btn-cancel:hover {
+            background: #d0d0d0;
+        }
+
+        /* Modal de seleção de contatos para grupo */        .contacts-select-list {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin: 10px 0;
+            max-height: 400px;
+        }
+
+        .contact-select-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.2s;
+            gap: 12px;
+        }
+
+        .contact-select-item:last-child {
+            border-bottom: none;
+        }
+
+        .contact-select-item:hover {
+            background: #f5f5f5;
+        }
+
+        .contact-select-item.selected {
+            background: #e8f5e9;
+        }
+
+        .contact-select-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #075e54;
+        }
+
+        .contact-select-item .mini-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #075e54;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            flex-shrink: 0;        }
+
+        .contact-select-item .contact-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .contact-select-item .contact-name {
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .contact-select-item .contact-email {
+            color: #999;
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .selected-count {
+            text-align: center;
+            color: #075e54;
+            font-size: 13px;
+            font-weight: bold;
+            margin: 8px 0;
+        }
+
+        .no-contacts-msg {
+            text-align: center;
+            padding: 30px 20px;
+            color: #999;
+            font-size: 14px;
         }
 
         /* Modal de visualização de imagem */
@@ -689,7 +783,6 @@
             align-items: center;
             cursor: pointer;
         }
-
         .image-viewer.active {
             display: flex;
         }
@@ -738,8 +831,7 @@
         }
 
         ::-webkit-scrollbar-track {
-            background: #f0f0f0;
-        }
+            background: #f0f0f0;        }
 
         ::-webkit-scrollbar-thumb {
             background: #075e54;
@@ -783,8 +875,12 @@
             <div class="settings-container">
                 <div class="header-btn" id="settings-btn" title="Configurações">⚙️</div>
                 <div class="settings-menu" id="settings-menu">
-                    <div class="settings-menu-item" id="settings-add-contact">
-                        <span class="menu-icon">➕</span>
+                    <!-- NOVO BOTÃO: NOVO GRUPO -->
+                    <div class="settings-menu-item" id="settings-new-group">
+                        <span class="menu-icon">👥</span>
+                        <span class="menu-text">Novo Grupo</span>
+                    </div>
+                    <div class="settings-menu-item" id="settings-add-contact">                        <span class="menu-icon">➕</span>
                         <span class="menu-text">Adicionar Contato</span>
                     </div>
                     <div class="settings-menu-item" id="settings-sound">
@@ -822,7 +918,8 @@
                     <span class="menu-icon">🗑️</span>
                     <span class="menu-text">Limpar mensagens</span>
                 </div>
-                <div class="chat-menu-item" id="menu-camera">
+                <!-- BOTÃO FOTO (CÂMERA) OCULTO -->
+                <div class="chat-menu-item" id="menu-camera" style="display: none;">
                     <span class="menu-icon">📷</span>
                     <span class="menu-text">Foto (Câmera)</span>
                     <input type="file" id="camera-input" accept="image/*" capture="environment">
@@ -832,16 +929,20 @@
                     <span class="menu-text">Anexos (Galeria)</span>
                     <input type="file" id="gallery-input" accept="image/*">
                 </div>
-                <div class="chat-menu-item" id="menu-sound">
-                    <span class="menu-icon">🔔</span>
+                <div class="chat-menu-item" id="menu-sound">                    <span class="menu-icon">🔔</span>
                     <span class="menu-text">Som de Notificação</span>
                     <span class="menu-status" id="chat-sound-status"></span>
                     <input type="file" id="sound-input" accept="audio/*">
                 </div>
-                <!-- NOVO BOTÃO: REMOVER CONTATO -->
+                <!-- BOTÃO: REMOVER CONTATO (só aparece em chat individual) -->
                 <div class="chat-menu-item danger" id="menu-delete-friend">
                     <span class="menu-icon">🚫</span>
                     <span class="menu-text">Remover Contato</span>
+                </div>
+                <!-- BOTÃO: SAIR DO GRUPO (só aparece em chat de grupo) -->
+                <div class="chat-menu-item danger" id="menu-leave-group" style="display: none;">
+                    <span class="menu-icon">🚪</span>
+                    <span class="menu-text">Sair do Grupo</span>
                 </div>
             </div>
         </div>
@@ -868,6 +969,33 @@
     </div>
 </div>
 
+<!-- Modal 1: Seleção de Contatos para Grupo -->
+<div class="modal" id="select-contacts-modal">
+    <div class="modal-content">
+        <h3>👥 Novo Grupo - Selecione os Participantes</h3>
+        <div class="selected-count" id="selected-count">0 selecionados</div>
+        <div class="contacts-select-list" id="contacts-select-list">
+            <div class="loading">Carregando contatos...</div>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-cancel" id="cancel-select-contacts">Cancelar</button>            <button class="btn-confirm" id="advance-to-name">Avançar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 2: Nome do Grupo -->
+<div class="modal" id="group-name-modal">
+    <div class="modal-content">
+        <h3>👥 Nome do Grupo</h3>
+        <input type="text" id="group-name-input" placeholder="Digite o nome do grupo" maxlength="40">
+        <div id="group-members-preview" style="font-size: 13px; color: #666; margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 8px;"></div>
+        <div class="modal-buttons">
+            <button class="btn-cancel" id="back-to-select">Voltar</button>
+            <button class="btn-confirm" id="confirm-create-group">Ok</button>
+        </div>
+    </div>
+</div>
+
 <!-- Visualizador de Imagem -->
 <div class="image-viewer" id="image-viewer">
     <img id="viewer-image" src="" alt="Imagem">
@@ -880,7 +1008,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, writeBatch, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyD6sVu3hsBK0AyH4jxr3lj94Hj7JAj16_g",
@@ -899,13 +1027,15 @@
     let currentChat = null;
     let contacts = [];
     let messagesListener = null;
-    let notificationSound = null;
-    let soundEnabled = false;
+    let notificationSound = null;    let soundEnabled = false;
     
     // Admin state
     let isAdmin = false;
-    let adminViewMode = 'users'; // 'users' or 'conversations'
-    let selectedUserForAdmin = null; // { email, displayName }
+    let adminViewMode = 'users';
+    let selectedUserForAdmin = null;
+
+    // Group creation state
+    let selectedGroupMembers = []; // array de { email, displayName }
 
     // Elementos
     const loginScreen = document.getElementById('login-screen');
@@ -918,6 +1048,7 @@
     const registerBtn = document.getElementById('register-btn');
     const logoutBtn = document.getElementById('settings-logout');
     const addContactBtn = document.getElementById('settings-add-contact');
+    const newGroupBtn = document.getElementById('settings-new-group');
     const backBtn = document.getElementById('back-btn');
     const sendBtn = document.getElementById('send-btn');
     const messageInput = document.getElementById('message-input');
@@ -936,6 +1067,17 @@
     const settingsMenu = document.getElementById('settings-menu');
     const backAdminBtn = document.getElementById('back-admin-btn');
     const mainTitle = document.getElementById('main-title');
+
+    // Modais de grupo
+    const selectContactsModal = document.getElementById('select-contacts-modal');
+    const contactsSelectList = document.getElementById('contacts-select-list');
+    const selectedCountEl = document.getElementById('selected-count');
+    const cancelSelectContacts = document.getElementById('cancel-select-contacts');
+    const advanceToNameBtn = document.getElementById('advance-to-name');
+    const groupNameModal = document.getElementById('group-name-modal');
+    const groupNameInput = document.getElementById('group-name-input');
+    const groupMembersPreview = document.getElementById('group-members-preview');    const backToSelectBtn = document.getElementById('back-to-select');
+    const confirmCreateGroupBtn = document.getElementById('confirm-create-group');
 
     function showToast(message, duration = 3000) {
         toast.textContent = message;
@@ -983,7 +1125,6 @@
         };
         reader.readAsDataURL(file);
     }
-
     async function login() {
         const email = loginEmail.value.trim();
         const password = loginPassword.value.trim();
@@ -1034,27 +1175,22 @@
     function getConversationId(user1, user2) {
         return [user1, user2].sort().join('_');
     }
-
-    // ========== NOVA FUNÇÃO: REMOVER CONTATO ==========
+    // ========== REMOVER CONTATO ==========
     async function removeContact(contactEmail, contactDisplayName) {
         if (!confirm(`Deseja realmente remover "${contactDisplayName}" da sua lista de contatos?\nA conversa será mantida, mas o contato sumirá da sua lista.`)) return;
 
         try {
-            // IDs dos documentos de contato (duas direções)
             const myId = `${currentUser.email.replace(/\./g, '_')}_${contactEmail.replace(/\./g, '_')}`;
             const friendId = `${contactEmail.replace(/\./g, '_')}_${currentUser.email.replace(/\./g, '_')}`;
             
-            // Deleta os dois registros de contato
             await deleteDoc(doc(db, "contatos", myId));
             await deleteDoc(doc(db, "contatos", friendId));
             
             showToast(`✅ Contato ${contactDisplayName} removido!`);
             
-            // Se o chat atual for o mesmo que está aberto, fecha e volta para a tela principal
             if (currentChat && (currentChat.contactEmail === contactEmail || (currentChat.isAdminView && currentChat.ownerEmail === contactEmail))) {
                 closeChat();
             }
-            // Força a recarga da lista de conversas (ou admin view)
             refreshMainContent();
             chatMenu.classList.remove('show');
         } catch (error) {
@@ -1063,7 +1199,145 @@
         }
     }
 
-    // ADMIN: Carregar todos os usuários
+    // ========== SAIR DO GRUPO ==========
+    async function leaveGroup(groupId, groupName) {
+        if (!confirm(`Deseja realmente sair do grupo "${groupName}"?`)) return;
+        try {
+            await updateDoc(doc(db, "grupos", groupId), {
+                membros: arrayRemove(currentUser.email)
+            });
+            showToast(`✅ Você saiu do grupo ${groupName}`);
+            chatMenu.classList.remove('show');
+            closeChat();
+        } catch (error) {
+            console.error("Erro ao sair do grupo:", error);
+            showToast("❌ Erro ao sair do grupo.");
+        }
+    }
+
+    // ========== NOVO GRUPO - FLUXO COMPLETO ==========
+    function openNewGroupModal() {
+        settingsMenu.classList.remove('show');
+        selectedGroupMembers = [];
+        renderContactsForSelection();
+        selectContactsModal.classList.add('active');
+    }
+
+    function renderContactsForSelection() {        contactsSelectList.innerHTML = '<div class="loading">Carregando contatos...</div>';
+        updateSelectedCount();
+
+        const contactsQuery = query(collection(db, "contatos"), where("userEmail", "==", currentUser.email));
+        getDocs(contactsQuery).then(snapshot => {
+            const userContacts = [];
+            snapshot.forEach(doc => userContacts.push(doc.data()));
+
+            if (userContacts.length === 0) {
+                contactsSelectList.innerHTML = '<div class="no-contacts-msg">Você ainda não tem contatos.<br>Adicione contatos primeiro para criar um grupo.</div>';
+                return;
+            }
+
+            contactsSelectList.innerHTML = '';
+            userContacts.forEach(contact => {
+                const item = document.createElement('div');
+                item.className = 'contact-select-item';
+                item.setAttribute('data-email', contact.contactEmail);
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `chk_${contact.contactEmail}`;
+
+                const avatar = document.createElement('div');
+                avatar.className = 'mini-avatar';
+                avatar.textContent = (contact.displayName || '?').charAt(0).toUpperCase();
+
+                const info = document.createElement('div');
+                info.className = 'contact-info';
+                const name = document.createElement('div');
+                name.className = 'contact-name';
+                name.textContent = contact.displayName;
+                const email = document.createElement('div');
+                email.className = 'contact-email';
+                email.textContent = contact.contactEmail;
+                info.appendChild(name);
+                info.appendChild(email);
+
+                item.appendChild(checkbox);
+                item.appendChild(avatar);
+                item.appendChild(info);
+
+                item.onclick = (e) => {
+                    if (e.target !== checkbox) checkbox.checked = !checkbox.checked;
+                    if (checkbox.checked) {
+                        item.classList.add('selected');
+                        if (!selectedGroupMembers.find(m => m.email === contact.contactEmail)) {
+                            selectedGroupMembers.push({ email: contact.contactEmail, displayName: contact.displayName });
+                        }
+                    } else {                        item.classList.remove('selected');
+                        selectedGroupMembers = selectedGroupMembers.filter(m => m.email !== contact.contactEmail);
+                    }
+                    updateSelectedCount();
+                };
+
+                contactsSelectList.appendChild(item);
+            });
+        }).catch(err => {
+            console.error(err);
+            contactsSelectList.innerHTML = '<div class="no-contacts-msg">Erro ao carregar contatos.</div>';
+        });
+    }
+
+    function updateSelectedCount() {
+        selectedCountEl.textContent = `${selectedGroupMembers.length} selecionado(s)`;
+    }
+
+    function advanceToGroupName() {
+        if (selectedGroupMembers.length < 1) {
+            return showToast('⚠️ Selecione pelo menos 1 contato');
+        }
+        selectContactsModal.classList.remove('active');
+        groupNameInput.value = '';
+        const names = selectedGroupMembers.map(m => m.displayName).join(', ');
+        groupMembersPreview.innerHTML = `<strong>Participantes (${selectedGroupMembers.length}+você):</strong><br>${names}`;
+        groupNameModal.classList.add('active');
+        setTimeout(() => groupNameInput.focus(), 100);
+    }
+
+    function backToSelectContacts() {
+        groupNameModal.classList.remove('active');
+        selectContactsModal.classList.add('active');
+    }
+
+    async function createGroup() {
+        const groupName = groupNameInput.value.trim();
+        if (!groupName) return showToast('⚠️ Digite o nome do grupo');
+        if (selectedGroupMembers.length < 1) return showToast('⚠️ Selecione pelo menos 1 contato');
+
+        try {
+            const membersEmails = [currentUser.email, ...selectedGroupMembers.map(m => m.email)];
+            // Remove duplicatas (caso o usuário já esteja na lista)
+            const uniqueMembers = [...new Set(membersEmails)];
+
+            const groupData = {
+                nome: groupName,
+                membros: uniqueMembers,
+                createdBy: currentUser.email,
+                createdByName: currentUser.email.split('@')[0],                createdAt: serverTimestamp(),
+                lastMessage: 'Grupo criado',
+                lastMessageTime: serverTimestamp()
+            };
+
+            const groupRef = await addDoc(collection(db, "grupos"), groupData);
+            showToast(`✅ Grupo "${groupName}" criado!`);
+            groupNameModal.classList.remove('active');
+            selectedGroupMembers = [];
+            refreshMainContent();
+        } catch (error) {
+            console.error("Erro ao criar grupo:", error);
+            showToast("❌ Erro ao criar grupo.");
+        }
+    }
+
+    // ========== ADMIN: Carregar todos os usuários ==========
     async function loadAllUsers() {
         conversationsList.innerHTML = '<div class="loading">Carregando usuários...</div>';
         try {
@@ -1096,8 +1370,7 @@
                 emailDiv.className = 'conversation-last-message';
                 emailDiv.textContent = user.email;
                 infoDiv.appendChild(nameDiv);
-                infoDiv.appendChild(emailDiv);
-                itemDiv.appendChild(avatar);
+                infoDiv.appendChild(emailDiv);                itemDiv.appendChild(avatar);
                 itemDiv.appendChild(infoDiv);
                 itemDiv.onclick = () => showUserConversations(user);
                 conversationsList.appendChild(itemDiv);
@@ -1108,7 +1381,7 @@
         }
     }
 
-    // ADMIN: Mostrar conversas (contatos) de um usuário específico
+    // ADMIN: Mostrar conversas de um usuário específico
     async function showUserConversations(user) {
         selectedUserForAdmin = user;
         adminViewMode = 'conversations';
@@ -1146,8 +1419,7 @@
             emailDiv.textContent = contact.contactEmail;
             infoDiv.appendChild(nameDiv);
             infoDiv.appendChild(emailDiv);
-            itemDiv.appendChild(avatar);
-            itemDiv.appendChild(infoDiv);
+            itemDiv.appendChild(avatar);            itemDiv.appendChild(infoDiv);
             itemDiv.onclick = () => openAdminChat(user, contact);
             conversationsList.appendChild(itemDiv);
         });
@@ -1176,15 +1448,16 @@
         sendBtn.style.opacity = '0.5';
         messageInput.style.background = '#f5f5f5';
         
-        // Esconder ações de modificação no menu
         const clearItem = document.getElementById('menu-clear-messages');
         const cameraItem = document.getElementById('menu-camera');
         const galleryItem = document.getElementById('menu-gallery');
         const deleteFriendItem = document.getElementById('menu-delete-friend');
+        const leaveGroupItem = document.getElementById('menu-leave-group');
         if (clearItem) clearItem.style.display = 'none';
         if (cameraItem) cameraItem.style.display = 'none';
         if (galleryItem) galleryItem.style.display = 'none';
         if (deleteFriendItem) deleteFriendItem.style.display = 'none';
+        if (leaveGroupItem) leaveGroupItem.style.display = 'none';
         
         loadAdminMessages(ownerUser.email, contact.contactEmail);
         messageInput.focus();
@@ -1195,8 +1468,7 @@
         const conversationId = getConversationId(ownerEmail, contactEmail);
         const messagesQuery = query(collection(db, "conversas", conversationId, "mensagens"), orderBy("timestamp", "asc"));
         messagesArea.innerHTML = '';
-        messagesListener = onSnapshot(messagesQuery, (snapshot) => {
-            messagesArea.innerHTML = '';
+        messagesListener = onSnapshot(messagesQuery, (snapshot) => {            messagesArea.innerHTML = '';
             if (snapshot.empty) {
                 messagesArea.innerHTML = '<div class="no-conversations"><p>Nenhuma mensagem trocada entre eles.</p></div>';
                 return;
@@ -1236,56 +1508,134 @@
         backAdminBtn.style.display = 'none';
         if (isAdmin && currentUser) loadAllUsers();
     }
-    
+
+    // ========== CARREGAR CONVERSAS NORMAIS (INDIVIDUAIS + GRUPOS) ==========
     function loadNormalConversations() {
         if (!currentUser) return;
+        conversationsList.innerHTML = '<div class="loading">Carregando...</div>';
+
+        // Listener de contatos individuais
         const contactsQuery = query(collection(db, "contatos"), where("userEmail", "==", currentUser.email));
-        onSnapshot(contactsQuery, async (snapshot) => {
-            contacts = [];
-            snapshot.forEach(doc => contacts.push({ id: doc.id, ...doc.data() }));
-            if (contacts.length === 0) {
-                conversationsList.innerHTML = '<div class="no-conversations"><h3>Nenhuma conversa ainda</h3><p>Adicione contatos para começar!</p></div>';
-                return;
-            }
-            conversationsList.innerHTML = '';
-            contacts.forEach(contact => {
-                const conversationId = getConversationId(currentUser.email, contact.contactEmail);
-                const messagesQuery = query(collection(db, "conversas", conversationId, "mensagens"), orderBy("timestamp", "desc"));
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'conversation-item';
-                itemDiv.setAttribute('data-email', contact.contactEmail);
-                itemDiv.onclick = () => openNormalChat(contact);
-                const avatar = document.createElement('div');
-                avatar.className = 'conversation-avatar';
-                avatar.textContent = contact.displayName.charAt(0).toUpperCase();
-                const infoDiv = document.createElement('div');
-                infoDiv.className = 'conversation-info';
-                const nameDiv = document.createElement('div');
-                nameDiv.className = 'conversation-name';
-                nameDiv.textContent = contact.displayName;
-                const lastMsgDiv = document.createElement('div');
-                lastMsgDiv.className = 'conversation-last-message';
-                lastMsgDiv.textContent = 'Carregando...';
-                infoDiv.appendChild(nameDiv);
-                infoDiv.appendChild(lastMsgDiv);
-                itemDiv.appendChild(avatar);
-                itemDiv.appendChild(infoDiv);
-                conversationsList.appendChild(itemDiv);
-                let prevCount = 0;
-                onSnapshot(messagesQuery, (snap) => {
-                    const isNew = snap.size > prevCount && prevCount > 0;
-                    const last = snap.docs[0];
-                    if (last) {
-                        const data = last.data();
-                        lastMsgDiv.textContent = data.tipo === 'imagem' ? '📷 Foto' : data.texto;
-                        if (isNew && data.enviadoPor !== currentUser.email) {
-                            playNotificationSound();
-                            itemDiv.classList.add('blinking');
-                            setTimeout(() => itemDiv.classList.remove('blinking'), 5000);
-                        }
-                    } else lastMsgDiv.textContent = 'Nenhuma mensagem';
-                    prevCount = snap.size;
-                });
+        const unsubContacts = onSnapshot(contactsQuery, (snapshot) => {
+            contacts = [];            snapshot.forEach(doc => contacts.push({ id: doc.id, ...doc.data() }));
+            renderConversationsList();
+        });
+
+        // Listener de grupos
+        const groupsQuery = query(collection(db, "grupos"), where("membros", "array-contains", currentUser.email));
+        const unsubGroups = onSnapshot(groupsQuery, (snapshot) => {
+            window._userGroups = [];
+            snapshot.forEach(doc => window._userGroups.push({ id: doc.id, ...doc.data() }));
+            renderConversationsList();
+        });
+
+        // Guarda os unsubscribes para limpar ao deslogar
+        window._conversationsUnsubs = [unsubContacts, unsubGroups];
+    }
+
+    function renderConversationsList() {
+        const contactsArr = contacts || [];
+        const groupsArr = window._userGroups || [];
+
+        if (contactsArr.length === 0 && groupsArr.length === 0) {
+            conversationsList.innerHTML = '<div class="no-conversations"><h3>Nenhuma conversa ainda</h3><p>Adicione contatos ou crie um grupo para começar!</p></div>';
+            return;
+        }
+
+        conversationsList.innerHTML = '';
+
+        // Renderiza GRUPOS primeiro
+        groupsArr.forEach(group => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'conversation-item';
+            itemDiv.setAttribute('data-group-id', group.id);
+
+            const avatar = document.createElement('div');
+            avatar.className = 'conversation-avatar group';
+            avatar.textContent = '👥';
+
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'conversation-info';
+
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'conversation-name';
+            nameDiv.textContent = group.nome || 'Grupo';
+
+            const lastMsgDiv = document.createElement('div');
+            lastMsgDiv.className = 'conversation-last-message';
+            lastMsgDiv.textContent = group.lastMessage || 'Nenhuma mensagem';
+
+            infoDiv.appendChild(nameDiv);
+            infoDiv.appendChild(lastMsgDiv);
+            itemDiv.appendChild(avatar);
+            itemDiv.appendChild(infoDiv);
+
+            itemDiv.onclick = () => openGroupChat(group);
+            conversationsList.appendChild(itemDiv);
+
+            // Listener das mensagens do grupo para atualizar última mensagem
+            const messagesQuery = query(
+                collection(db, "grupos", group.id, "mensagens"),
+                orderBy("timestamp", "desc")
+            );
+            let prevCount = 0;
+            onSnapshot(messagesQuery, (snap) => {
+                const isNew = snap.size > prevCount && prevCount > 0;
+                const last = snap.docs[0];
+                if (last) {
+                    const data = last.data();
+                    let preview = '';
+                    if (data.tipo === 'imagem') preview = '📷 Foto';
+                    else preview = `${data.nomeRemetente || '?'}: ${data.texto || ''}`;
+                    lastMsgDiv.textContent = preview;
+
+                    if (isNew && data.enviadoPor !== currentUser.email) {
+                        playNotificationSound();
+                        itemDiv.classList.add('blinking');
+                        setTimeout(() => itemDiv.classList.remove('blinking'), 5000);
+                    }
+                }
+                prevCount = snap.size;
+            });
+        });
+
+        // Renderiza CONTATOS INDIVIDUAIS
+        contactsArr.forEach(contact => {
+            const conversationId = getConversationId(currentUser.email, contact.contactEmail);
+            const messagesQuery = query(collection(db, "conversas", conversationId, "mensagens"), orderBy("timestamp", "desc"));
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'conversation-item';
+            itemDiv.setAttribute('data-email', contact.contactEmail);
+            itemDiv.onclick = () => openNormalChat(contact);
+            const avatar = document.createElement('div');
+            avatar.className = 'conversation-avatar';
+            avatar.textContent = contact.displayName.charAt(0).toUpperCase();
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'conversation-info';
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'conversation-name';
+            nameDiv.textContent = contact.displayName;
+            const lastMsgDiv = document.createElement('div');            lastMsgDiv.className = 'conversation-last-message';
+            lastMsgDiv.textContent = 'Carregando...';
+            infoDiv.appendChild(nameDiv);
+            infoDiv.appendChild(lastMsgDiv);
+            itemDiv.appendChild(avatar);
+            itemDiv.appendChild(infoDiv);
+            conversationsList.appendChild(itemDiv);
+            let prevCount = 0;
+            onSnapshot(messagesQuery, (snap) => {
+                const isNew = snap.size > prevCount && prevCount > 0;
+                const last = snap.docs[0];
+                if (last) {
+                    const data = last.data();
+                    lastMsgDiv.textContent = data.tipo === 'imagem' ? '📷 Foto' : data.texto;
+                    if (isNew && data.enviadoPor !== currentUser.email) {
+                        playNotificationSound();
+                        itemDiv.classList.add('blinking');
+                        setTimeout(() => itemDiv.classList.remove('blinking'), 5000);
+                    }
+                } else lastMsgDiv.textContent = 'Nenhuma mensagem';
+                prevCount = snap.size;
             });
         });
     }
@@ -1294,9 +1644,11 @@
         currentChat = { 
             contactEmail: contact.contactEmail, 
             displayName: contact.displayName, 
-            isAdminView: false 
+            isAdminView: false,
+            isGroup: false
         };
         document.getElementById('chat-avatar').textContent = contact.displayName.charAt(0).toUpperCase();
+        document.getElementById('chat-avatar').classList.remove('group');
         chatContactName.textContent = contact.displayName;
         chatContactName.classList.remove('blinking');
         document.getElementById('chat-contact-status').textContent = 'online';
@@ -1307,16 +1659,51 @@
         messageInput.placeholder = "Digite uma mensagem...";
         sendBtn.style.opacity = '1';
         messageInput.style.background = 'white';
-        // Mostrar todos os itens do menu (inclusive o de remover contato)
         const clearItem = document.getElementById('menu-clear-messages');
         const cameraItem = document.getElementById('menu-camera');
         const galleryItem = document.getElementById('menu-gallery');
         const deleteFriendItem = document.getElementById('menu-delete-friend');
-        if (clearItem) clearItem.style.display = 'flex';
-        if (cameraItem) cameraItem.style.display = 'flex';
+        const leaveGroupItem = document.getElementById('menu-leave-group');
+        if (clearItem) clearItem.style.display = 'flex';        if (cameraItem) cameraItem.style.display = 'none';
         if (galleryItem) galleryItem.style.display = 'flex';
         if (deleteFriendItem) deleteFriendItem.style.display = 'flex';
+        if (leaveGroupItem) leaveGroupItem.style.display = 'none';
         loadNormalMessages();
+        messageInput.focus();
+    }
+
+    // ========== ABRIR CHAT DE GRUPO ==========
+    function openGroupChat(group) {
+        currentChat = {
+            groupId: group.id,
+            groupName: group.nome,
+            groupMembers: group.membros,
+            isAdminView: false,
+            isGroup: true
+        };
+        document.getElementById('chat-avatar').textContent = '👥';
+        document.getElementById('chat-avatar').classList.add('group');
+        chatContactName.textContent = group.nome;
+        chatContactName.classList.remove('blinking');
+        document.getElementById('chat-contact-status').textContent = `${group.membros.length} participante(s)`;
+        mainScreen.classList.remove('active');
+        chatScreen.classList.add('active');
+        messageInput.disabled = false;
+        sendBtn.disabled = false;
+        messageInput.placeholder = "Digite uma mensagem no grupo...";
+        sendBtn.style.opacity = '1';
+        messageInput.style.background = 'white';
+        const clearItem = document.getElementById('menu-clear-messages');
+        const cameraItem = document.getElementById('menu-camera');
+        const galleryItem = document.getElementById('menu-gallery');
+        const deleteFriendItem = document.getElementById('menu-delete-friend');
+        const leaveGroupItem = document.getElementById('menu-leave-group');
+        if (clearItem) clearItem.style.display = 'none'; // Não permite limpar mensagens do grupo
+        if (cameraItem) cameraItem.style.display = 'none';
+        if (galleryItem) galleryItem.style.display = 'flex';
+        if (deleteFriendItem) deleteFriendItem.style.display = 'none';
+        if (leaveGroupItem) leaveGroupItem.style.display = 'flex';
+        loadGroupMessages();
         messageInput.focus();
     }
     
@@ -1326,8 +1713,7 @@
         const messagesQuery = query(collection(db, "conversas", conversationId, "mensagens"), orderBy("timestamp", "asc"));
         messagesArea.innerHTML = '';
         let prevCount = 0;
-        messagesListener = onSnapshot(messagesQuery, (snapshot) => {
-            const isNew = snapshot.size > prevCount && prevCount > 0;
+        messagesListener = onSnapshot(messagesQuery, (snapshot) => {            const isNew = snapshot.size > prevCount && prevCount > 0;
             const lastDoc = snapshot.docs[snapshot.docs.length - 1];
             const isFromOther = lastDoc && lastDoc.data().enviadoPor !== currentUser.email;
             messagesArea.innerHTML = '';
@@ -1364,20 +1750,97 @@
             prevCount = snapshot.size;
         });
     }
+
+    // ========== CARREGAR MENSAGENS DO GRUPO ==========
+    function loadGroupMessages() {
+        if (messagesListener) messagesListener();
+        const groupId = currentChat.groupId;
+        const messagesQuery = query(
+            collection(db, "grupos", groupId, "mensagens"),
+            orderBy("timestamp", "asc")
+        );
+        messagesArea.innerHTML = '';
+        let prevCount = 0;
+        messagesListener = onSnapshot(messagesQuery, (snapshot) => {
+            const isNew = snapshot.size > prevCount && prevCount > 0;            const lastDoc = snapshot.docs[snapshot.docs.length - 1];
+            const isFromOther = lastDoc && lastDoc.data().enviadoPor !== currentUser.email;
+            messagesArea.innerHTML = '';
+            if (snapshot.empty) {
+                messagesArea.innerHTML = '<div class="no-conversations"><p>Envie a primeira mensagem no grupo!</p></div>';
+                prevCount = 0;
+                return;
+            }
+            snapshot.forEach(doc => {
+                const msg = doc.data();
+                const div = document.createElement('div');
+                div.className = `message ${msg.enviadoPor === currentUser.email ? 'sent' : 'received'}`;
+                // Mostra nome do remetente em grupos (exceto nas próprias mensagens)
+                if (msg.enviadoPor !== currentUser.email && msg.nomeRemetente) {
+                    const senderDiv = document.createElement('div');
+                    senderDiv.className = 'message-sender';
+                    senderDiv.textContent = msg.nomeRemetente;
+                    div.appendChild(senderDiv);
+                }
+                if (msg.tipo === 'imagem' && msg.imagem) {
+                    const img = document.createElement('img');
+                    img.className = 'message-image';
+                    img.src = msg.imagem;
+                    img.onclick = () => { viewerImage.src = msg.imagem; imageViewer.classList.add('active'); };
+                    div.appendChild(img);
+                } else if (msg.texto) {
+                    const textDiv = document.createElement('div');
+                    textDiv.className = 'message-text';
+                    textDiv.textContent = msg.texto;
+                    div.appendChild(textDiv);
+                }
+                const timeDiv = document.createElement('div');
+                timeDiv.className = 'message-time';
+                const time = msg.timestamp ? msg.timestamp.toDate() : new Date();
+                timeDiv.textContent = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                div.appendChild(timeDiv);
+                messagesArea.appendChild(div);
+            });
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+            if (isNew && isFromOther) {
+                playNotificationSound();
+                chatContactName.classList.add('blinking');
+                setTimeout(() => chatContactName.classList.remove('blinking'), 5000);
+            }
+            prevCount = snapshot.size;
+        });
+    }
     
     async function sendMessage() {
-        if (!currentChat || currentChat.isAdminView) return showToast('Modo admin: não é possível enviar');
-        const text = messageInput.value.trim();
+        if (!currentChat || currentChat.isAdminView) return showToast('Modo admin: não é possível enviar');        const text = messageInput.value.trim();
         if (!text) return;
-        const conversationId = getConversationId(currentUser.email, currentChat.contactEmail);
-        await addDoc(collection(db, "conversas", conversationId, "mensagens"), {
-            texto: text, tipo: 'texto', enviadoPor: currentUser.email, timestamp: serverTimestamp()
-        });
+
+        if (currentChat.isGroup) {
+            // Envia para grupo
+            await addDoc(collection(db, "grupos", currentChat.groupId, "mensagens"), {
+                texto: text,
+                tipo: 'texto',
+                enviadoPor: currentUser.email,
+                nomeRemetente: currentUser.email.split('@')[0],
+                timestamp: serverTimestamp()
+            });
+            // Atualiza última mensagem do grupo
+            await updateDoc(doc(db, "grupos", currentChat.groupId), {
+                lastMessage: `${currentUser.email.split('@')[0]}: ${text}`,
+                lastMessageTime: serverTimestamp()
+            });
+        } else {
+            // Envia para conversa individual
+            const conversationId = getConversationId(currentUser.email, currentChat.contactEmail);
+            await addDoc(collection(db, "conversas", conversationId, "mensagens"), {
+                texto: text, tipo: 'texto', enviadoPor: currentUser.email, timestamp: serverTimestamp()
+            });
+        }
         messageInput.value = '';
     }
     
     async function clearMessages() {
         if (currentChat?.isAdminView) return showToast('Ação não permitida no modo visualização');
+        if (currentChat?.isGroup) return showToast('Use "Sair do Grupo" em vez disso');
         if (!confirm('Apagar TODAS as mensagens?')) return;
         const conversationId = getConversationId(currentUser.email, currentChat.contactEmail);
         const snapshot = await getDocs(collection(db, "conversas", conversationId, "mensagens"));
@@ -1397,10 +1860,23 @@
         showToast('📤 Enviando...');
         const reader = new FileReader();
         reader.onload = async (e) => {
-            const conversationId = getConversationId(currentUser.email, currentChat.contactEmail);
-            await addDoc(collection(db, "conversas", conversationId, "mensagens"), {
-                tipo: 'imagem', imagem: e.target.result, enviadoPor: currentUser.email, timestamp: serverTimestamp()
-            });
+            if (currentChat.isGroup) {                await addDoc(collection(db, "grupos", currentChat.groupId, "mensagens"), {
+                    tipo: 'imagem',
+                    imagem: e.target.result,
+                    enviadoPor: currentUser.email,
+                    nomeRemetente: currentUser.email.split('@')[0],
+                    timestamp: serverTimestamp()
+                });
+                await updateDoc(doc(db, "grupos", currentChat.groupId), {
+                    lastMessage: `${currentUser.email.split('@')[0]}: 📷 Foto`,
+                    lastMessageTime: serverTimestamp()
+                });
+            } else {
+                const conversationId = getConversationId(currentUser.email, currentChat.contactEmail);
+                await addDoc(collection(db, "conversas", conversationId, "mensagens"), {
+                    tipo: 'imagem', imagem: e.target.result, enviadoPor: currentUser.email, timestamp: serverTimestamp()
+                });
+            }
             showToast('✅ Foto enviada');
             chatMenu.classList.remove('show');
         };
@@ -1433,8 +1909,7 @@
         mainScreen.classList.add('active'); 
         chatMenu.classList.remove('show'); 
         if (isAdmin) {
-            if (adminViewMode === 'users') loadAllUsers();
-            else if (adminViewMode === 'conversations' && selectedUserForAdmin) showUserConversations(selectedUserForAdmin);
+            if (adminViewMode === 'users') loadAllUsers();            else if (adminViewMode === 'conversations' && selectedUserForAdmin) showUserConversations(selectedUserForAdmin);
         } else {
             loadNormalConversations();
         }
@@ -1464,7 +1939,8 @@
                 loadAllUsers();
                 const addContactSetting = document.getElementById('settings-add-contact');
                 if (addContactSetting) addContactSetting.style.display = 'none';
-                // Esconder também o botão de remover contato no menu (já que admin não tem contatos próprios)
+                const newGroupSetting = document.getElementById('settings-new-group');
+                if (newGroupSetting) newGroupSetting.style.display = 'none';
                 const deleteFriendMenuItem = document.getElementById('menu-delete-friend');
                 if (deleteFriendMenuItem) deleteFriendMenuItem.style.display = 'none';
             } else {
@@ -1472,12 +1948,19 @@
                 backAdminBtn.style.display = 'none';
                 const addContactSetting = document.getElementById('settings-add-contact');
                 if (addContactSetting) addContactSetting.style.display = 'flex';
+                const newGroupSetting = document.getElementById('settings-new-group');
+                if (newGroupSetting) newGroupSetting.style.display = 'flex';
                 const deleteFriendMenuItem = document.getElementById('menu-delete-friend');
                 if (deleteFriendMenuItem) deleteFriendMenuItem.style.display = 'flex';
                 loadNormalConversations();
             }
         } else {
             currentUser = null;
+            // Limpa listeners de conversas ao deslogar
+            if (window._conversationsUnsubs) {
+                window._conversationsUnsubs.forEach(u => u && u());                window._conversationsUnsubs = null;
+            }
+            window._userGroups = [];
             loginScreen.style.display = 'flex';
             mainScreen.classList.remove('active');
             chatScreen.classList.remove('active');
@@ -1497,6 +1980,12 @@
     registerBtn.onclick = register;
     logoutBtn.onclick = logout;
     addContactBtn.onclick = openAddContactModal;
+    // NOVO: Botão Novo Grupo
+    newGroupBtn.onclick = openNewGroupModal;
+    cancelSelectContacts.onclick = () => selectContactsModal.classList.remove('active');
+    advanceToNameBtn.onclick = advanceToGroupName;
+    backToSelectBtn.onclick = backToSelectContacts;
+    confirmCreateGroupBtn.onclick = createGroup;
     backBtn.onclick = closeChat;
     sendBtn.onclick = sendMessage;
     cancelAddContact.onclick = closeAddContactModal;
@@ -1518,15 +2007,20 @@
     document.getElementById('settings-sound').onclick = (e) => { e.stopPropagation(); document.getElementById('settings-sound-input').click(); };
     document.getElementById('settings-sound-input').addEventListener('change', (e) => { if(e.target.files[0]) handleSoundFile(e.target.files[0]); e.target.value=''; });
     messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
-    
-    // Evento para o novo botão "Remover Contato"
-    document.getElementById('menu-delete-friend').addEventListener('click', (e) => {
+        document.getElementById('menu-delete-friend').addEventListener('click', (e) => {
         e.stopPropagation();
-        if (!currentChat || currentChat.isAdminView) return;
+        if (!currentChat || currentChat.isAdminView || currentChat.isGroup) return;
         removeContact(currentChat.contactEmail, currentChat.displayName);
     });
+
+    // NOVO: Botão Sair do Grupo
+    document.getElementById('menu-leave-group').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!currentChat || !currentChat.isGroup) return;
+        leaveGroup(currentChat.groupId, currentChat.groupName);
+    });
     
-    console.log('✅ iChat com opção "Remover Contato" carregado');
+    console.log('✅ iChat com criação de Grupos carregado');
 </script>
 </body>
 </html>
